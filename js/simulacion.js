@@ -170,7 +170,7 @@
     $('#sim-epsilon').textContent = agente.epsilon.toFixed(3);
     $('#sim-reward-ep').textContent = rewardEpisodioActual;
     const media = mediaMovil();
-    $('#sim-reward-media').textContent = media == null ? '—' : media.toFixed(1);
+    $('#sim-reward-media').textContent = media == null ? 'N/D' : media.toFixed(1);
 
     actualizarGauge();
     dibujarGrafico();
@@ -197,7 +197,7 @@
     const btn = $('#sim-play');
     btn.classList.toggle('is-pausando', playing);
     btn.disabled = terminado;
-    btn.textContent = terminado ? '✓ Entrenamiento completo' : (playing ? '⏸ Pausar' : '▶ Reproducir');
+    btn.textContent = terminado ? 'Entrenamiento completo' : (playing ? 'Pausar' : 'Reproducir');
   }
 
   function play() {

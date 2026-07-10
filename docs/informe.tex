@@ -1,0 +1,268 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{parskip}
+
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection.}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.4em}{0.6em}
+
+\title{\textbf{El Clasificador}\\[0.2em]\large Aprendizaje por Refuerzo para la detección de correo anómalo}
+\author{Sistemas Inteligentes \\ Universidad de La Frontera}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+\begin{center}
+\small Informe breve \quad\textbullet\quad Aplicación web: \textit{El Clasificador}
+\end{center}
+\vspace{1em}
+
+\noindent\textbf{Resumen.} Este trabajo presenta una aplicación web educativa
+que enseña Aprendizaje por Refuerzo (RL) a través de un caso de detección de
+anomalías: separar correo legítimo de correo anómalo (spam y suplantación,
+\textit{phishing}). En lugar de un tutorial abstracto, la app muestra a un
+agente de Q-learning (un clasificador recién instalado en una sala de correo)
+fracasar, aprender y finalmente superar a un conjunto de reglas razonables.
+Cada concepto formal (estado, acción, recompensa, política) aparece primero
+como un hecho físico y solo después como una ecuación. Todo el modelo se
+entrena en el navegador, sin backend ni dependencias.
+
+\section{El problema, y por qué es Aprendizaje por Refuerzo}
+
+Clasificar correo es tomar, miles de veces al día, una decisión bajo
+incertidumbre: \texttt{aceptar} (al buzón) o \texttt{descartar} (a la
+papelera), sin conocer con certeza el contenido. Los errores no son
+simétricos: dejar pasar spam es una molestia. \textbf{Descartar una carta
+legítima es un daño irreversible.} Esa asimetría de costos, sumada a la
+naturaleza secuencial del flujo (la reputación de un remitente evoluciona con
+lo que ha enviado antes), es exactamente la clase de problema que el RL
+modela de forma natural: un agente que aprende una política por interacción
+con un entorno, guiado solo por una señal de recompensa \cite{sutton2018}.
+
+A diferencia del aprendizaje supervisado, aquí no hay un maestro que entregue
+la etiqueta correcta de cada correo antes de decidir. Hay un número, la
+recompensa, que llega \textit{después} de actuar, cuando se revela la verdad,
+y que empuja al agente a mejorar. El costo asimétrico, además, no hay que
+codificarlo como una regla: vive dentro de la función de recompensa, y la
+política conservadora emerge.
+
+\textbf{¿Por qué esto es detección de anomalías?} La detección de anomalías
+identifica eventos poco frecuentes que se desvían de un patrón esperado,
+mayormente ``normal'' \cite{pang2021}. El correo anómalo de este trabajo
+encaja ahí: spam y suplantación son minoría (30\% y 10\% del tráfico, ver
+\S4) frente al correo legítimo, y se definen precisamente por desviarse de
+las señales típicas de un remitente de confianza: contacto nuevo o
+reputación en caída, urgencia inusual, enlaces sin patrón previo, horario
+atípico. La suplantación es el caso límite: no es una categoría aparte con
+reglas propias, es la \textit{cola} de la distribución, camuflada dentro de
+lo que parece normal (buena reputación, remitente conocido). Detectarla
+exige aprender la combinación de señales, no una sola regla. Es exactamente
+lo que el agente hace.
+
+\section{El modelo: un proceso de decisión (MDP)}
+
+Formalizamos la sala de correo como una tupla $(S, A, R, T, \gamma)$.
+
+\textbf{Estado ($S$).} Cada correo se describe con cinco variables
+observables, dibujadas sobre el sobre:
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Variable} & \textbf{Valores} & \textbf{Representación visual} \\
+\midrule
+remitente & conocido / desconocido & sello relleno o hueco \\
+reputación & buena / neutra / mala & color del sello (ámbar / gris / negro) \\
+enlaces & 0 / 1 / varios & marcas de anzuelo \\
+urgencia & baja / alta & cinta roja \\
+hora & laboral / madrugada & matasellos (sol / luna) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Cardinalidad: $2 \times 3 \times 3 \times 2 \times 2 = 72$ estados. La
+discretización se eligió para ser legible, no óptima: permite representar
+toda la tabla Q como un archivador de 72 sobres que el usuario puede leer de
+un vistazo.
+
+\textbf{Acciones ($A$).} $\{\text{aceptar}, \text{descartar}\}$.
+
+\textbf{Recompensa ($R$).} Es literalmente la matriz de confusión, con costo
+asimétrico:
+
+\begin{center}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+ & \textbf{era legítimo} & \textbf{era spam} \\
+\midrule
+\textbf{aceptar} & $+5$ & $-2$ \\
+\textbf{descartar} & $\mathbf{-20}$ & $+3$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Descartar una carta real cuesta diez veces más que dejar pasar spam. Ese
+$-20$ es el corazón del modelo.
+
+\textbf{Transición ($T$).} Tras cada decisión se revela la etiqueta
+verdadera y el entorno actualiza la reputación del remitente: sube un nivel
+con correo legítimo (lentamente: dos aciertos por nivel), baja con spam (un
+envío por nivel). Así el estado de un remitente evoluciona con la
+trayectoria.
+
+\textbf{Descuento ($\gamma = 0.9$).}
+
+\section{El algoritmo: Q-learning tabular}
+
+El agente estima $Q(s, a)$, el valor a largo plazo de tomar la acción $a$ en
+el estado $s$, y lo corrige tras cada transición $(s, a, r, s')$
+\cite{sutton2018,watkins1992}:
+
+\begin{center}
+$Q(s,a) \leftarrow Q(s,a) + \alpha \cdot \left[\, r + \gamma \cdot
+\max_{a'} Q(s',a') - Q(s,a) \,\right]$
+\end{center}
+
+La actualización es \textit{off-policy}: el objetivo usa
+$\max_{a'} Q(s',a')$, la mejor acción futura, aunque el agente aún esté
+explorando. Hiperparámetros: $\alpha = 0.1$, $\gamma = 0.9$, y una política
+$\varepsilon$-greedy con $\varepsilon: 1.0 \rightarrow 0.05$ (decaimiento
+exponencial sobre 5\,000 episodios). No se usa una red neuronal (DQN): el
+estado es diminuto, y una tabla, a diferencia de una red, se puede
+visualizar, que es el punto de la app.
+
+\section{Los datos: un entorno con trampas}
+
+El correo es sintético y se muestrea de cuatro poblaciones con
+características estocásticas (por eso ninguna señal aislada clasifica
+perfecto): legítimo cotidiano (45\%), legítimo nuevo (15\%), spam burdo
+(30\%) y suplantación (10\%). Un episodio es una jornada de 50 sobres de 15
+remitentes fijos. El entorno tiene tres trampas deliberadas:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{El legítimo nuevo} castiga la regla ``descartar si el
+    remitente es desconocido'': rompe cartas reales de clientes nuevos.
+  \item \textbf{La suplantación} castiga la regla ``confiar en el remitente
+    conocido'': llega desde una dirección conocida y de buena reputación.
+    Solo la delatan los enlaces.
+  \item \textbf{El remitente comprometido} (3 de los 15) empieza enviando
+    correo legítimo y, a mitad de la jornada, pasa a la suplantación. Impide
+    memorizar ``confío en X''.
+\end{itemize}
+
+\section{Resultados}
+
+Se evaluaron cinco estrategias sobre 500 episodios (25\,000 sobres) del
+mismo flujo (el entorno es determinista dado su semilla, y su flujo no
+depende de la acción, lo que hace la comparación exacta):
+
+\begin{center}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Estrategia} & \textbf{R/ep} & \textbf{Cartas rotas} & \textbf{Suplant. atrapada} & \textbf{Aciertos} \\
+\midrule
+Aceptar todo & 108.9 & 0 & 0\% & 60\% \\
+Descartar todo & $-536.2$ & 14\,918 & 100\% & 40\% \\
+Regla: descartar si desconocido & $-114.6$ & 4\,927 & 19\% & 49\% \\
+Regla: descartar si mala reputación & 176.2 & 0 & 13\% & 87\% \\
+\textbf{Política aprendida (RL)} & \textbf{193.0} & 53 & \textbf{40\%} & \textbf{94\%} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+La política aprendida obtiene la mayor recompensa y atrapa tres veces más
+suplantación que la regla de reputación (40\% vs. 13\%), rompiendo muy pocas
+cartas reales. La clave: la regla de reputación reacciona (solo descarta
+después de que el daño bajó la reputación, y no ve venir al remitente
+comprometido, cuya reputación aún es buena al atacar), mientras que la
+política aprendida anticipa, desconfiando de la combinación de señales
+(sello ámbar más varios anzuelos más urgencia) antes que del historial.
+
+\textbf{La parte honesta.} La política aprendida acepta \textit{más} spam
+que la regla dura, porque le enseñamos a temerle al $-20$. No es un defecto:
+es la función de recompensa haciendo exactamente lo que le pedimos. La app
+lo declara en lugar de esconderlo.
+
+\section{Exploración vs. explotación}
+
+La app permite forzar $\varepsilon = 0$ desde el primer episodio. El agente
+resultante explota su primera corazonada de inmediato: su curva de
+recompensa arranca alta (no paga el precio de equivocarse al azar) pero se
+estanca. Atrapa solo un ${\sim}23\%$ de la suplantación (contra ${\sim}40\%$
+del agente que exploró) y deja pasar más spam, porque nunca probó descartar
+los sobres ambiguos que parecían legítimos. El agente que explora paga caro
+al inicio (su curva se hunde en negativo) y por eso descubre después lo que
+la primera corazonada no vio. Es el dilema exploración-explotación, mostrado
+en una sola curva.
+
+\section{Limitaciones}
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Datos sintéticos.} El agente aprendió sobre un mundo
+    diseñado por nosotros: proporciones, señales y la recompensa $-20$ son
+    elecciones. Ningún resultado aquí prueba algo sobre correo real.
+  \item \textbf{¿MDP o bandit contextual?} En este entorno la reputación se
+    actualiza según la etiqueta verdadera, no según la acción del agente.
+    Estrictamente, la acción no cambia el estado siguiente, por lo que el
+    problema se acerca más a un \textit{bandit contextual con contexto no
+    estacionario}. El interés secuencial reside en que el estado de un
+    remitente evoluciona con la trayectoria (el remitente comprometido).
+    Preferimos señalarlo a exagerar el rol de $\gamma$.
+  \item \textbf{Alternativas.} Un filtro bayesiano o supervisado, con un
+    buen corpus etiquetado, probablemente superaría a RL en exactitud pura
+    \cite{sahami1998,cormack2008,pang2021}. Su debilidad es justamente el
+    costo asimétrico y el desbalance de clases, que hay que inyectar a
+    mano. Este trabajo no afirma que RL sea la mejor solución: muestra cómo
+    se piensa el problema en términos de RL.
+\end{itemize}
+
+\section{Conclusiones}
+
+\textit{El Clasificador} logra el objetivo del enunciado: explica los
+fundamentos del Aprendizaje por Refuerzo (agente, entorno, estado, acción,
+recompensa, política), el proceso de aprendizaje por recompensas y el
+algoritmo de Q-learning, anclando cada concepto a un caso concreto y
+realista de detección de anomalías. La visualización (la compuerta que se
+inclina, el archivador de 72 sobres que se colorea, la papelera que
+conserva sus cicatrices) convierte conceptos abstractos en objetos
+observables. Y, sobre todo, el trabajo es honesto acerca de sus límites, lo
+que a nuestro juicio demuestra más comprensión que reportar una cifra de
+exactitud sin contexto.
+
+\begin{thebibliography}{9}
+
+\bibitem{sutton2018}
+Sutton, R. S., \& Barto, A. G. (2018). \textit{Reinforcement Learning: An
+Introduction} (2.\textsuperscript{a} ed.). MIT Press.
+
+\bibitem{watkins1992}
+Watkins, C. J. C. H., \& Dayan, P. (1992). Q-learning. \textit{Machine
+Learning}, 8(3-4), 279-292.
+
+\bibitem{pang2021}
+Pang, G., Shen, C., Cao, L., \& van den Hengel, A. (2021). Deep learning for
+anomaly detection: A review. \textit{ACM Computing Surveys}, 54(2).
+
+\bibitem{sahami1998}
+Sahami, M., Dumais, S., Heckerman, D., \& Horvitz, E. (1998). A Bayesian
+approach to filtering junk e-mail. \textit{AAAI Workshop on Learning for
+Text Categorization} (Tech. Report WS-98-05).
+
+\bibitem{cormack2008}
+Cormack, G. V. (2008). Email spam filtering: A systematic review.
+\textit{Foundations and Trends in Information Retrieval}, 1(4), 335-455.
+
+\end{thebibliography}
+
+\end{document}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>El Clasificador — Aprendizaje por Refuerzo para el correo anomalo</title>
+  <title>El Clasificador: Aprendizaje por Refuerzo para el correo anomalo</title>
   <meta name="description" content="Novela grafica interactiva sobre Aprendizaje por Refuerzo aplicado a la deteccion de correo anomalo. Q-learning, en el navegador." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -56,7 +56,7 @@
           <li>hora</li>
         </ul>
         <p class="acciones-carta">Con esas pistas elige: <strong class="accion accion--aceptar">aceptar</strong> y mandar al buzon, o <strong class="accion accion--descartar">descartar</strong> y mandar a la papelera.</p>
-        <p>La dificultad es que los errores no pesan igual. Aceptar spam mete ruido o fraude; descartar un correo legitimo puede perder una cuenta, una tarea o una factura. Por eso <strong class="rojo">romper una carta real cuesta mucho mas que dejar pasar spam.</strong></p>
+        <p>La dificultad es que los errores no pesan igual. Aceptar spam mete ruido o fraude. Descartar un correo legitimo puede perder una cuenta, una tarea o una factura. Por eso <strong class="rojo">romper una carta real cuesta mucho mas que dejar pasar spam.</strong></p>
         <p>El agente aprende por consecuencias: aciertos suman recompensa, errores restan, y los errores graves restan mucho mas. El recorrido muestra como se equivoca, explora y termina comparando su politica contra reglas simples.</p>
       </div>
     </div>
@@ -94,9 +94,9 @@
          <dt><span class="glifo glifo--anzuelo"></span> Enlaces</dt>
          <dd>Los anzuelos en la esquina inferior derecha muestran <span class="mono">cero</span>, <span class="mono">uno</span> o <span class="mono">varios</span> enlaces.</dd>
          <dt><span class="glifo glifo--cinta"></span> Urgencia</dt>
-         <dd>Una cinta roja diagonal aparece cuando el mensaje viene con urgencia <span class="mono">alta</span>; sin cinta es urgencia <span class="mono">baja</span>.</dd>
+         <dd>Una cinta roja diagonal aparece cuando el mensaje viene con urgencia <span class="mono">alta</span>. Sin cinta es urgencia <span class="mono">baja</span>.</dd>
          <dt><span class="glifo glifo--sol"></span> Hora</dt>
-         <dd>Un sol marca horario <span class="mono">laboral</span>; una luna marca <span class="mono">madrugada</span>.</dd>
+         <dd>Un sol marca horario <span class="mono">laboral</span>. Una luna marca <span class="mono">madrugada</span>.</dd>
        </dl>
     </aside>
     <h3 class="cap1-titulo">Ejemplos de Sobres</h3>
@@ -126,11 +126,11 @@
       <li><strong>El legítimo nuevo</strong> castiga la regla obvia <span class="mono">descartar si el remitente es desconocido</span>. Esa regla rompe cartas reales de clientes nuevos.</li>
       <li><strong>La suplantación</strong> castiga la regla opuesta <span class="mono">confiar en el remitente conocido</span>. Es el phishing: llega desde una dirección que ya conoces, y lo único que lo delata son los enlaces.</li>
     </ul>
-    <p>Ninguna señal, sola, alcanza. Hay que combinarlas — y pesar que un error es mucho peor que el otro. Ese peso es lo que vera a continuacion.</p>
+    <p>Ninguna señal, sola, alcanza. Hay que combinarlas y pesar que un error es mucho peor que el otro. Ese peso es lo que vera a continuacion.</p>
   </div>
 </section>
 
-<!-- ===================== CAP 2 — Armando el agente (índice) ===================== -->
+<!-- ===================== CAP 2: Armando el agente (índice) ===================== -->
 <section id="cap-agente" class="cap">
   <p class="kicker">Capítulo 2</p>
   <h2>Armando el agente</h2>
@@ -191,7 +191,7 @@
       <div><dt><span class="mono">Q(s, descartar)</span></dt><dd>El valor que estima para la accion <em>descartar</em> en ese estado.</dd></div>
     </dl>
     <p><strong>Cada fila de la tabla representa una de las posibles cartas del problema.</strong> En total existen 72 cartas, una por cada tipo de sobre, por lo que los estados se indexan desde <span class="mono"><span class="var-s">s</span> = 0</span> hasta <span class="mono"><span class="var-s">s</span> = 71</span>. Cuando llega un sobre, el agente analiza sus atributos y determina a que estado <span class="mono var-s">s</span> corresponde dentro de la tabla. Si dos sobres poseen exactamente las mismas caracteristicas, ambos se asocian al mismo estado.</p>
-    <p>Al inicio del entrenamiento, la tabla ya contiene los 72 estados definidos; sin embargo, <strong>los valores de las acciones <span class="mono">Q(s, aceptar)</span> y <span class="mono">Q(s, descartar)</span> se inicializan en <span class="mono">0</span>, ya que el agente aun no ha aprendido cual decision es la mas conveniente para cada caso.</strong> Para ilustrar este funcionamiento, consideremos el siguiente ejemplo de una carta.</p>
+    <p>Al inicio del entrenamiento, la tabla ya contiene los 72 estados definidos. Sin embargo, <strong>los valores de las acciones <span class="mono">Q(s, aceptar)</span> y <span class="mono">Q(s, descartar)</span> se inicializan en <span class="mono">0</span>, ya que el agente aun no ha aprendido cual decision es la mas conveniente para cada caso.</strong> Para ilustrar este funcionamiento, consideremos el siguiente ejemplo de una carta.</p>
     <div class="agente-piezas">
       <div class="agente-piezas__col">
         <h4 class="pieza-sub">Carta de ejemplo</h4>
@@ -242,7 +242,7 @@
       <div><dt><span class="mono">γ</span></dt><dd>El factor de descuento: cuanto pesa lo que pueda venir despues.</dd></div>
       <div><dt><span class="mono">max<sub>a′</sub> Q(s′, a′)</span></dt><dd>El mejor valor alcanzable desde el estado siguiente <span class="mono">s′</span>.</dd></div>
     </dl>
-    <p>El termino entre corchetes es el <strong>error de prediccion</strong>: la diferencia entre lo que el agente esperaba (<span class="mono">Q(s,a)</span>) y lo que observa al actuar (<span class="mono var-r">r</span> mas la mejor recompensa futura estimada). Si es positivo, la accion salio mejor de lo previsto y su valor sube; si es negativo, baja. A diferencia del aprendizaje supervisado, no hay un profesor que indique la decision correcta: solo este error, que ajusta la tabla <span class="mono">Q</span> paso a paso.</p>
+    <p>El termino entre corchetes es el <strong>error de prediccion</strong>: la diferencia entre lo que el agente esperaba (<span class="mono">Q(s,a)</span>) y lo que observa al actuar (<span class="mono var-r">r</span> mas la mejor recompensa futura estimada). Si es positivo, la accion salio mejor de lo previsto y su valor sube. Si es negativo, baja. A diferencia del aprendizaje supervisado, no hay un profesor que indique la decision correcta: solo este error, que ajusta la tabla <span class="mono">Q</span> paso a paso.</p>
 
     <p>Veamoslo en accion con la carta de la Pieza 1. La recompensa <span class="mono var-r">r</span> sale de la <strong>matriz de confusion</strong>, que cruza la accion del agente con la clasificacion real del sobre:</p>
 
@@ -252,7 +252,7 @@
         <div id="agente-sobre-p2" class="cap1-sobre"></div>
       </div>
       <div class="agente-piezas__col">
-        <h4 class="pieza-sub">El agente <strong style="font-size:1.15rem;color:var(--lacre);font-weight:700;">ACEPTO</strong> la carta — ¿que recompensa recibe?</h4>
+        <h4 class="pieza-sub">El agente <strong style="font-size:1.15rem;color:var(--lacre);font-weight:700;">ACEPTO</strong> la carta. ¿Que recompensa recibe?</h4>
         <table class="matriz">
           <thead><tr><th></th><th>El sobre era <strong>legitimo</strong></th><th>El sobre era <strong>spam</strong></th></tr></thead>
           <tbody>
@@ -364,7 +364,7 @@
       <li>La regla es simple: una recompensa que llegará dentro de <span class="mono">n</span> sobres vale hoy solo <span class="mono"><span class="var-g">γ</span>ⁿ</span>. Cuanto más lejos está, menos pesa.</li>
     </ul>
     <p class="ecuacion mono">Q(s,a) ← Q(s,a) + α · [ r + <strong class="var-g">γ</strong> · max<sub>a′</sub> Q(s′,a′) − Q(s,a) ]</p>
-    <p class="lista-perillas__cierre">Dentro de la fórmula, <span class="mono var-g">γ</span> multiplica siempre al mejor valor futuro estimado. En esta carta ese producto es <span class="mono"><span class="var-g">γ</span> · 0 = 0</span>: por eso no se nota. Si el estado siguiente ya valiera <span class="mono">max Q(s′,a′) = 5</span>, con <span class="mono"><span class="var-g">γ</span> = 0,9</span> el agente sumaría <span class="mono">4,5</span> a la recompensa inmediata; con <span class="mono"><span class="var-g">γ</span> = 0,1</span>, solo <span class="mono">0,5</span>. Así se ve esa diferencia mirando <span class="mono">n</span> sobres hacia adelante:</p>
+    <p class="lista-perillas__cierre">Dentro de la fórmula, <span class="mono var-g">γ</span> multiplica siempre al mejor valor futuro estimado. En esta carta ese producto es <span class="mono"><span class="var-g">γ</span> · 0 = 0</span>: por eso no se nota. Si el estado siguiente ya valiera <span class="mono">max Q(s′,a′) = 5</span>, con <span class="mono"><span class="var-g">γ</span> = 0,9</span> el agente sumaría <span class="mono">4,5</span> a la recompensa inmediata. Con <span class="mono"><span class="var-g">γ</span> = 0,1</span>, solo <span class="mono">0,5</span>. Así se ve esa diferencia mirando <span class="mono">n</span> sobres hacia adelante:</p>
 
     <div class="decae">
       <div class="decae__barra"><span class="decae__v">0,90</span><span class="decae__vara" style="--h:90%"></span><span class="decae__n">n=1</span></div>
@@ -388,7 +388,7 @@
   <p class="kicker">Pieza 4</p>
   <h2 style="font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.8vw,2rem);">Como decide: la politica <span class="mono">ε</span>-greedy</h2>
   <div class="medida">
-    <p>Disponer de la tabla <span class="mono">Q</span> no es suficiente; el agente también necesita un criterio para decidir cómo utilizar la información aprendida. Para ello se emplea la política <span class="mono">ε</span>-greedy, cuya función es determinar, en cada decisión, si el agente debe <strong>explotar</strong> el conocimiento adquirido o <strong>explorar</strong> alternativas que podrían resultar más beneficiosas.</p>
+    <p>Disponer de la tabla <span class="mono">Q</span> no es suficiente. El agente también necesita un criterio para decidir cómo utilizar la información aprendida. Para ello se emplea la política <span class="mono">ε</span>-greedy, cuya función es determinar, en cada decisión, si el agente debe <strong>explotar</strong> el conocimiento adquirido o <strong>explorar</strong> alternativas que podrían resultar más beneficiosas.</p>
     <p>El parámetro <span class="mono">ε</span> define la probabilidad de exploración. Por ejemplo, con <span class="mono">ε = 0,3</span>, el agente explora en el 30 % de las decisiones y explota el conocimiento disponible en el 70 % restante. En cada sobre recibido se genera un valor aleatorio. Si este se encuentra dentro del intervalo definido por <span class="mono">ε</span>, el agente ignora temporalmente la tabla <span class="mono">Q</span> y selecciona de forma aleatoria entre las acciones <strong>aceptar</strong> y <strong>descartar</strong>. En caso contrario, consulta la tabla y elige la acción con el mayor valor <span class="mono">Q</span>, es decir, aquella que, según la experiencia acumulada, ofrece el mejor resultado esperado.</p>
     <div class="scn-eje">
       <span>Nunca explora</span>
@@ -401,7 +401,7 @@
         <div class="scn-head">
           <span class="scn-eps">ε = 0</span>
         </div>
-        <p class="scn-body">El agente siempre elige la acción de mayor <span class="mono">Q</span>. Nunca explora. Si la tabla tiene ceros, siempre gana la primera opción — no porque sea mejor. Queda atrapado y nunca descubre caminos superiores.</p>
+        <p class="scn-body">El agente siempre elige la acción de mayor <span class="mono">Q</span>. Nunca explora. Si la tabla tiene ceros, siempre gana la primera opción, no porque sea mejor. Queda atrapado y nunca descubre caminos superiores.</p>
         <div class="scn-cuando"><span class="cuando-k">¿Cuando se usa?</span> <span class="cuando-v">cuando la política ya es de confianza.</span></div>
       </div>
 
@@ -409,7 +409,7 @@
         <div class="scn-head">
           <span class="scn-eps">ε = 0,3</span>
         </div>
-        <p class="scn-body">El <span class="mono">70 %</span> de las veces elige la mejor acción según <span class="mono">Q</span>; el <span class="mono">30 %</span> restante prueba al azar — suficiente para corregirse si <span class="mono">Q</span> está equivocado, sin renunciar a lo aprendido.</p>
+        <p class="scn-body">El <span class="mono">70 %</span> de las veces elige la mejor acción según <span class="mono">Q</span>, el <span class="mono">30 %</span> restante prueba al azar, suficiente para corregirse si <span class="mono">Q</span> está equivocado, sin renunciar a lo aprendido.</p>
         <div class="scn-cuando"><span class="cuando-k">¿Cuando se usa?</span> <span class="cuando-v">durante la mayor parte del entrenamiento.</span></div>
       </div>
 
@@ -417,7 +417,7 @@
         <div class="scn-head">
           <span class="scn-eps">ε = 1</span>
         </div>
-        <p class="scn-body">Ignora la tabla <span class="mono">Q</span> y elige al azar: cada sobre tiene <span class="mono">50 %</span> de ir al buzón y <span class="mono">50 %</span> a la papelera. Es el punto de partida obligado — con una tabla de ceros no hay nada que explotar.</p>
+        <p class="scn-body">Ignora la tabla <span class="mono">Q</span> y elige al azar: cada sobre tiene <span class="mono">50 %</span> de ir al buzón y <span class="mono">50 %</span> a la papelera. Es el punto de partida obligado, ya que con una tabla de ceros no hay nada que explotar.</p>
         <div class="scn-cuando"><span class="cuando-k">¿Cuando se usa?</span> <span class="cuando-v">al inicio del entrenamiento.</span></div>
       </div>
     </div>
@@ -480,7 +480,7 @@
           <div><dt>Sobre</dt><dd class="mono" id="sim-paso">0 / 50</dd></div>
           <div><dt><span class="mono">ε</span> (epsilon)</dt><dd class="mono" id="sim-epsilon">1.000</dd></div>
           <div><dt>Recompensa (episodio)</dt><dd class="mono" id="sim-reward-ep">0</dd></div>
-          <div><dt>Media móvil (20 ep.)</dt><dd class="mono" id="sim-reward-media">—</dd></div>
+          <div><dt>Media móvil (20 ep.)</dt><dd class="mono" id="sim-reward-media">N/D</dd></div>
         </dl>
         <div class="sim__gauge" aria-hidden="true"><span id="sim-epsilon-barra" class="sim__gauge-fill"></span></div>
         <div class="sim__gauge-etq" aria-hidden="true"><span>Explotar</span><span>Explorar</span></div>
@@ -506,7 +506,7 @@
     </div>
 
     <div class="sim__controles">
-      <button type="button" id="sim-play" class="sim__play">▶ Reproducir</button>
+      <button type="button" id="sim-play" class="sim__play">Reproducir</button>
       <div class="segmentado" id="sim-velocidad">
         <button type="button" data-v="1" class="activo">×1</button>
         <button type="button" data-v="10">×10</button>
@@ -531,16 +531,16 @@
   <h2>El modelo</h2>
   <div class="medida anexo-cuerpo">
     <h3>¿Por que esto es deteccion de anomalias?</h3>
-    <p>La deteccion de anomalias identifica eventos poco frecuentes que se desvian de un patron esperado, mayormente «normal» (ref. 3). El correo anomalo de este trabajo encaja ahi: spam y suplantacion son minoria (30 % y 10 % del trafico, ver Anexo B) frente al correo legitimo, y se definen precisamente por desviarse de las señales tipicas de un remitente de confianza — contacto nuevo o reputacion en caida, urgencia inusual, enlaces sin patron previo, horario atipico. La suplantacion es el caso limite: no es una categoria aparte con reglas propias, es la <em>cola</em> de la distribucion, camuflada dentro de lo que parece normal (buena reputacion, remitente conocido). Detectarla exige aprender la combinacion de señales, no una sola regla — que es exactamente lo que el agente hace.</p>
+    <p>La deteccion de anomalias identifica eventos poco frecuentes que se desvian de un patron esperado, mayormente «normal» (ref. 3). El correo anomalo de este trabajo encaja ahi: spam y suplantacion son minoria (30 % y 10 % del trafico, ver Anexo B) frente al correo legitimo, y se definen precisamente por desviarse de las señales tipicas de un remitente de confianza, como contacto nuevo o reputacion en caida, urgencia inusual, enlaces sin patron previo, horario atipico. La suplantacion es el caso limite: no es una categoria aparte con reglas propias, es la <em>cola</em> de la distribucion, camuflada dentro de lo que parece normal (buena reputacion, remitente conocido). Detectarla exige aprender la combinacion de señales, no una sola regla. Es exactamente lo que el agente hace.</p>
 
     <h3>El proceso de decision (MDP)</h3>
     <p>Modelamos la sala como una tupla <span class="mono">(S, A, R, T, γ)</span>:</p>
     <ul>
-      <li><span class="mono">S</span> — estado: <span class="mono">(remitente, reputacion, enlaces, urgencia, hora)</span>. Cardinalidades <span class="mono">2 × 3 × 3 × 2 × 2 = 72</span>.</li>
-      <li><span class="mono">A</span> — acciones: <span class="mono">{ aceptar, descartar }</span>.</li>
-      <li><span class="mono">R</span> — recompensa: la matriz de confusion (<span class="mono">+5, −2, −20, +3</span>).</li>
-      <li><span class="mono">T</span> — transicion: el entorno revela la etiqueta verdadera y actualiza la reputacion del remitente (sube 1 con legitimo, baja 2 con spam; se necesitan 2 aciertos para subir un nivel, 1 spam para bajar).</li>
-      <li><span class="mono">γ = 0.9</span> — factor de descuento.</li>
+      <li><span class="mono">S</span> es el estado: <span class="mono">(remitente, reputacion, enlaces, urgencia, hora)</span>. Cardinalidades <span class="mono">2 × 3 × 3 × 2 × 2 = 72</span>.</li>
+      <li><span class="mono">A</span> son las acciones: <span class="mono">{ aceptar, descartar }</span>.</li>
+      <li><span class="mono">R</span> es la recompensa: la matriz de confusion (<span class="mono">+5, −2, −20, +3</span>).</li>
+      <li><span class="mono">T</span> es la transicion: el entorno revela la etiqueta verdadera y actualiza la reputacion del remitente (sube 1 con legitimo, baja 2 con spam. Se necesitan 2 aciertos para subir un nivel, 1 spam para bajar).</li>
+      <li><span class="mono">γ = 0.9</span> es el factor de descuento.</li>
     </ul>
 
     <h3>Q-learning tabular, off-policy</h3>
@@ -551,13 +551,13 @@
     <p>La discretizacion se eligio <strong>para ser legible, no para ser optima</strong>. Binear los enlaces en <span class="mono">{0, 1, varios}</span> pierde informacion (¿siete enlaces es igual que tres?), y colapsar la hora en dos bins ignora patrones finos. A cambio, ganamos una Q-table que cabe en un archivador de 72 sobres que el usuario puede leer de un vistazo. Es una decision de comunicacion, asumida.</p>
 
     <h3>Nota honesta: ¿MDP o bandit contextual?</h3>
-    <p>En este entorno la reputacion se actualiza segun la <em>etiqueta verdadera</em> del sobre, no segun la accion del agente. Estrictamente, entonces, la accion no cambia el estado siguiente, y el problema se acerca mas a un <strong>bandit contextual con contexto no estacionario</strong> que a un MDP con acoplamiento fuerte. Lo que sostiene el interes secuencial es que el estado de un remitente <em>evoluciona con la trayectoria</em> — el remitente comprometido es el caso claro: fue de confianza y dejo de serlo. Como el maximo <span class="mono">Q(s′,·)</span> es casi constante entre estados (el proximo sobre es en gran medida independiente del actual), <span class="mono">γ</span> agrega sobre todo un desplazamiento, y la politica aprendida coincide en la practica con la optima por recompensa inmediata. Preferimos decirlo a exagerar el rol de <span class="mono">γ</span>.</p>
+    <p>En este entorno la reputacion se actualiza segun la <em>etiqueta verdadera</em> del sobre, no segun la accion del agente. Estrictamente, entonces, la accion no cambia el estado siguiente, y el problema se acerca mas a un <strong>bandit contextual con contexto no estacionario</strong> que a un MDP con acoplamiento fuerte. Lo que sostiene el interes secuencial es que el estado de un remitente <em>evoluciona con la trayectoria</em>. El remitente comprometido es el caso claro: fue de confianza y dejo de serlo. Como el maximo <span class="mono">Q(s′,·)</span> es casi constante entre estados (el proximo sobre es en gran medida independiente del actual), <span class="mono">γ</span> agrega sobre todo un desplazamiento, y la politica aprendida coincide en la practica con la optima por recompensa inmediata. Preferimos decirlo a exagerar el rol de <span class="mono">γ</span>.</p>
 
     <h3>¿Por que RL y no otra cosa?</h3>
     <ul>
-      <li><strong>Regla fija</strong> — <span class="mono">descartar si desconocido</span>: rapida de escribir, pero rompe los legitimos nuevos y traga toda la suplantacion. Pierde frente a la politica aprendida.</li>
+      <li><strong>Regla fija</strong>, <span class="mono">descartar si desconocido</span>: rapida de escribir, pero rompe los legitimos nuevos y traga toda la suplantacion. Pierde frente a la politica aprendida.</li>
       <li><strong>Naive Bayes / filtro supervisado</strong>: con un buen corpus etiquetado, probablemente supere a RL en exactitud pura. Su debilidad es el costo asimetrico y el desbalance de clases (ref. 3, 4), que hay que inyectar a mano. RL lo incorpora en la recompensa de forma natural.</li>
-      <li><strong>Deep Q-Network (DQN)</strong>: innecesario aqui — el estado es diminuto — y, sobre todo, <strong>no se podria visualizar</strong>: una red no tiene un archivador de 72 sobres que pintar. La tabla es una decision de diseño, no una limitacion.</li>
+      <li><strong>Deep Q-Network (DQN)</strong>: innecesario aqui (el estado es diminuto) y, sobre todo, <strong>no se podria visualizar</strong>: una red no tiene un archivador de 72 sobres que pintar. La tabla es una decision de diseño, no una limitacion.</li>
     </ul>
   </div>
 </section>
@@ -597,7 +597,7 @@
   </div>
 
   <footer class="pie">
-    <p>El Clasificador — Sistemas Inteligentes, Universidad de La Frontera. Codigo, datos y modelo: 100 % en el navegador, cero dependencias de ejecucion. <a href="README.md">README</a>.</p>
+    <p>El Clasificador. Sistemas Inteligentes, Universidad de La Frontera. Codigo, datos y modelo: 100 % en el navegador, cero dependencias de ejecucion. <a href="README.md">README</a>.</p>
   </footer>
 </section>
 
