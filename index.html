@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>El Clasificador — Aprendizaje por Refuerzo para el correo anomalo</title>
+  <meta name="description" content="Novela grafica interactiva sobre Aprendizaje por Refuerzo aplicado a la deteccion de correo anomalo. Q-learning, en el navegador." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/sobre-visualizador.css" />
+</head>
+<body>
+
+<div class="progreso" aria-hidden="true"></div>
+
+<!-- Navegacion lateral -->
+<nav class="nav" aria-label="Capitulos">
+  <span class="nav__marca">El&nbsp;Clasificador</span>
+  <div class="nav__links">
+    <a href="#prologo">Prologo</a>
+    <a href="#cap1">1 · Anatomía de un sobre</a>
+    <a href="#cap-agente">2 · Armando el agente</a>
+    <a href="#pieza-1" class="nav__sub">Pieza 1 · La tabla Q</a>
+    <a href="#pieza-2" class="nav__sub">Pieza 2 · La regla</a>
+    <a href="#pieza-3" class="nav__sub">Pieza 3 · α y γ</a>
+    <a href="#pieza-4" class="nav__sub">Pieza 4 · ε-greedy</a>
+    <a href="#trayectoria" class="nav__sub">Trayectoria completa</a>
+    <a href="#cap3">3 · El agente en vivo</a>
+    <a href="#anexoA" class="nav__anexo nav__anexo--primero">Anexo A · El modelo</a>
+    <a href="#anexoB" class="nav__anexo">Anexo B · Los datos</a>
+  </div>
+  <div class="nav__controles">
+    <button type="button" class="nav__flecha" data-nav-dir="prev" aria-label="Capítulo anterior">‹</button>
+    <button type="button" class="nav__flecha" data-nav-dir="next" aria-label="Capítulo siguiente">›</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ===================== PROLOGO ===================== -->
+<section id="prologo" class="cap cap--portada">
+  <div class="portada__grid">
+    <div class="portada__texto">
+      <h1 class="portada__titulo">El&nbsp;Clasificador</h1>
+      <p class="portada__sub">Un agente aprende a decidir si cada correo es legitimo o spam. No lee el mensaje completo: observa señales del sobre, actua y paga las consecuencias de cada error.</p>
+      <div class="reveal prologo__cuerpo">
+        <p>Cada correo llega como un sobre con pistas limitadas. El agente no sabe la verdad todavia: solo ve estas señales y decide.</p>
+        <ul class="senales-carta" aria-label="Señales visibles del correo">
+          <li>remitente</li>
+          <li>reputacion</li>
+          <li>enlaces</li>
+          <li>urgencia</li>
+          <li>hora</li>
+        </ul>
+        <p class="acciones-carta">Con esas pistas elige: <strong class="accion accion--aceptar">aceptar</strong> y mandar al buzon, o <strong class="accion accion--descartar">descartar</strong> y mandar a la papelera.</p>
+        <p>La dificultad es que los errores no pesan igual. Aceptar spam mete ruido o fraude; descartar un correo legitimo puede perder una cuenta, una tarea o una factura. Por eso <strong class="rojo">romper una carta real cuesta mucho mas que dejar pasar spam.</strong></p>
+        <p>El agente aprende por consecuencias: aciertos suman recompensa, errores restan, y los errores graves restan mucho mas. El recorrido muestra como se equivoca, explora y termina comparando su politica contra reglas simples.</p>
+      </div>
+    </div>
+    <div class="correo-animacion" aria-hidden="true">
+      <span class="correo correo--uno" data-arq="cotidiano" data-size="86"></span>
+      <span class="correo correo--dos" data-arq="nuevo" data-size="72"></span>
+      <span class="correo correo--tres" data-arq="spam" data-size="96"></span>
+      <span class="correo correo--cuatro" data-arq="suplantacion" data-size="78"></span>
+      <span class="correo correo--cinco" data-arq="malareput" data-size="68"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CAP 1 ===================== -->
+<section id="cap1" class="cap sobre-visualizador">
+  <p class="kicker">Capítulo 1</p>
+  <h2>Anatomía de un sobre</h2>
+  <p class="lede">Antes de hablar de agentes, hay que aprender a leer un sobre. Todo lo que el clasificador sabrá de un correo está a la vista, en cinco señales. El sobre <em>es</em> el estado.</p>
+
+  <div class="cap1-layout reveal">
+    <aside class="cap1-leyenda">
+      <h3 class="cap1-titulo">Caracteristicas de las cartas</h3>
+      <dl>
+         <dt><span class="glifo glifo--sello"></span> Remitente</dt>
+         <dd>
+          <span class="leyenda-opcion"><span class="sello-demo sello-demo--relleno"></span> Relleno: ya escribió antes (<span class="mono">conocido</span>).</span>
+          <span class="leyenda-opcion"><span class="sello-demo sello-demo--hueco"></span> Hueco: es la primera vez (<span class="mono">desconocido</span>).</span>
+         </dd>
+         <dt><span class="glifo glifo--reputacion"></span> Reputación</dt>
+         <dd>
+          <span class="leyenda-opcion"><span class="reput-circ reput-circ--ambar" title="buena"></span> Ámbar: buena reputación (<span class="mono">buena</span>).</span>
+          <span class="leyenda-opcion"><span class="reput-circ reput-circ--gris" title="neutra"></span> Gris: reputación neutra (<span class="mono">neutra</span>).</span>
+          <span class="leyenda-opcion"><span class="reput-circ reput-circ--negro" title="mala"></span> Negro: mala reputación (<span class="mono">mala</span>).</span>
+         </dd>
+         <dt><span class="glifo glifo--anzuelo"></span> Enlaces</dt>
+         <dd>Los anzuelos en la esquina inferior derecha muestran <span class="mono">cero</span>, <span class="mono">uno</span> o <span class="mono">varios</span> enlaces.</dd>
+         <dt><span class="glifo glifo--cinta"></span> Urgencia</dt>
+         <dd>Una cinta roja diagonal aparece cuando el mensaje viene con urgencia <span class="mono">alta</span>; sin cinta es urgencia <span class="mono">baja</span>.</dd>
+         <dt><span class="glifo glifo--sol"></span> Hora</dt>
+         <dd>Un sol marca horario <span class="mono">laboral</span>; una luna marca <span class="mono">madrugada</span>.</dd>
+       </dl>
+    </aside>
+    <h3 class="cap1-titulo">Ejemplos de Sobres</h3>
+    <div id="cap1-controles" class="segmentado">
+      <button data-arq="cotidiano" class="activo">Legítimo cotidiano</button>
+      <button data-arq="nuevo">Legítimo nuevo</button>
+      <button data-arq="spam">Spam burdo</button>
+      <button data-arq="suplantacion">Suplantación</button>
+    </div>
+    <div class="cap1-visor">
+      <div class="cap1-visor__grid">
+        <div class="cap1-visor__principal">
+          <div id="cap1-sobre" class="cap1-sobre"></div>
+          <p id="cap1-desc" class="cap1-desc"></p>
+        </div>
+        <div class="cap1-visor__lateral">
+          <div id="cap1-parametros" class="cap1-parametros" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal callout callout--trampa">
+    <h3>Las dos trampas que rompen las reglas fáciles</h3>
+    <p>Mira el <strong>legítimo nuevo</strong> y la <strong>suplantación</strong> arriba. Son las que hacen difícil el problema:</p>
+    <ul>
+      <li><strong>El legítimo nuevo</strong> castiga la regla obvia <span class="mono">descartar si el remitente es desconocido</span>. Esa regla rompe cartas reales de clientes nuevos.</li>
+      <li><strong>La suplantación</strong> castiga la regla opuesta <span class="mono">confiar en el remitente conocido</span>. Es el phishing: llega desde una dirección que ya conoces, y lo único que lo delata son los enlaces.</li>
+    </ul>
+    <p>Ninguna señal, sola, alcanza. Hay que combinarlas — y pesar que un error es mucho peor que el otro. Ese peso es lo que vera a continuacion.</p>
+  </div>
+</section>
+
+<!-- ===================== CAP 2 — Armando el agente (índice) ===================== -->
+<section id="cap-agente" class="cap">
+  <p class="kicker">Capítulo 2</p>
+  <h2>Armando el agente</h2>
+  <p class="lede">Ya tenemos los sobres, las señales y el criterio de premio y castigo. Falta el agente. No es una caja mágica: es un puñado de piezas simples, y cada concepto teórico del Aprendizaje por Refuerzo es, aquí, una de esas piezas con un trabajo concreto sobre las cartas. Elegí una pieza para empezar a armarlo.</p>
+
+  <div class="armado">
+    <article class="pieza-card">
+      <span class="pieza-card__simbolo mono" aria-hidden="true">Q</span>
+      <p class="pieza-card__eyebrow">Pieza 1</p>
+      <h3 class="pieza-card__titulo"><a href="#pieza-1" class="pieza-card__link">La memoria: la tabla Q</a></h3>
+      <p class="pieza-card__desc">La tabla Q es la memoria del agente: 72 filas, 2 columnas, guarda el valor estimado de cada acción en cada estado posible.</p>
+      <span class="pieza-card__ir" aria-hidden="true">Ver pieza →</span>
+    </article>
+
+    <article class="pieza-card">
+      <span class="pieza-card__simbolo mono" aria-hidden="true">Q(s,a)</span>
+      <p class="pieza-card__eyebrow">Pieza 2</p>
+      <h3 class="pieza-card__titulo"><a href="#pieza-2" class="pieza-card__link">Cómo aprende: la regla de actualización</a></h3>
+      <p class="pieza-card__desc">La ecuación de Q-learning aplicada paso a paso: cómo se corrige Q(s,a) tras cada decisión usando la recompensa recibida.</p>
+      <span class="pieza-card__ir" aria-hidden="true">Ver pieza →</span>
+    </article>
+
+    <article class="pieza-card">
+      <span class="pieza-card__simbolo mono" aria-hidden="true">α·γ</span>
+      <p class="pieza-card__eyebrow">Pieza 3</p>
+      <h3 class="pieza-card__titulo"><a href="#pieza-3" class="pieza-card__link">Las dos perillas: α y γ</a></h3>
+      <p class="pieza-card__desc">La tasa de aprendizaje α y el factor de descuento γ: los hiperparámetros que gobiernan cómo aprende el agente.</p>
+      <span class="pieza-card__ir" aria-hidden="true">Ver pieza →</span>
+    </article>
+
+    <article class="pieza-card">
+      <span class="pieza-card__simbolo mono" aria-hidden="true">ε</span>
+      <p class="pieza-card__eyebrow">Pieza 4</p>
+      <h3 class="pieza-card__titulo"><a href="#pieza-4" class="pieza-card__link">Cómo decide: la política ε-greedy</a></h3>
+      <p class="pieza-card__desc">La regla que equilibra exploración y explotación: cuándo usar lo aprendido y cuándo probar algo nuevo al azar.</p>
+      <span class="pieza-card__ir" aria-hidden="true">Ver pieza →</span>
+    </article>
+
+    <article class="pieza-card pieza-card--cierre">
+      <p class="pieza-card__eyebrow">Cierre</p>
+      <h3 class="pieza-card__titulo"><a href="#trayectoria" class="pieza-card__link">La trayectoria completa</a></h3>
+      <p class="pieza-card__desc">El recorrido de ε desde 1,0 hasta 0: del tanteo inicial a la confianza final, y el dilema que resuelve esta política.</p>
+      <span class="pieza-card__ir" aria-hidden="true">Ver el cierre →</span>
+    </article>
+  </div>
+</section>
+
+<!-- ===================== PIEZA 1 ===================== -->
+<section id="pieza-1" class="cap">
+  <p class="kicker">Pieza 1</p>
+  <h2 style="font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.8vw,2rem);">La memoria: la tabla <span class="mono">Q</span></h2>
+  <div class="medida">
+    <p><strong>La tabla Q es la memoria de nuestro agente:</strong> una cuadricula con una fila por cada estado posible y una columna por cada accion. En cada casilla guarda un numero, <span class="mono">Q(s, a)</span>, que estima cuanto vale, a la larga, tomar esa accion en ese estado.</p>
+    <p><strong>La tabla tiene tres columnas:</strong></p>
+    <dl class="tabla-q-leyenda">
+      <div><dt><span class="mono">estado s</span></dt><dd>Cada situacion distinta que el agente puede encontrar.</dd></div>
+      <div><dt><span class="mono">Q(s, aceptar)</span></dt><dd>El valor que el agente estima para la accion <em>aceptar</em> en ese estado.</dd></div>
+      <div><dt><span class="mono">Q(s, descartar)</span></dt><dd>El valor que estima para la accion <em>descartar</em> en ese estado.</dd></div>
+    </dl>
+    <p><strong>Cada fila de la tabla representa una de las posibles cartas del problema.</strong> En total existen 72 cartas, una por cada tipo de sobre, por lo que los estados se indexan desde <span class="mono"><span class="var-s">s</span> = 0</span> hasta <span class="mono"><span class="var-s">s</span> = 71</span>. Cuando llega un sobre, el agente analiza sus atributos y determina a que estado <span class="mono var-s">s</span> corresponde dentro de la tabla. Si dos sobres poseen exactamente las mismas caracteristicas, ambos se asocian al mismo estado.</p>
+    <p>Al inicio del entrenamiento, la tabla ya contiene los 72 estados definidos; sin embargo, <strong>los valores de las acciones <span class="mono">Q(s, aceptar)</span> y <span class="mono">Q(s, descartar)</span> se inicializan en <span class="mono">0</span>, ya que el agente aun no ha aprendido cual decision es la mas conveniente para cada caso.</strong> Para ilustrar este funcionamiento, consideremos el siguiente ejemplo de una carta.</p>
+    <div class="agente-piezas">
+      <div class="agente-piezas__col">
+        <h4 class="pieza-sub">Carta de ejemplo</h4>
+        <div id="agente-sobre" class="cap1-sobre"></div>
+        <div id="agente-parametros" class="cap1-parametros" aria-label="Valores de la carta de ejemplo"></div>
+      </div>
+      <div class="agente-piezas__col">
+        <h4 class="pieza-sub">Tabla Q</h4>
+        <table class="matriz matriz--q">
+          <thead>
+            <tr><th>estado <span class="mono">s</span></th><th><span class="mono">Q(s, aceptar)</span></th><th><span class="mono">Q(s, descartar)</span></th></tr>
+          </thead>
+          <tbody>
+            <tr><th style="color:var(--papel);">s = 0</th><td>0.00</td><td>0.00</td></tr>
+            <tr><th>s = 1</th><td>0.00</td><td>0.00</td></tr>
+            <tr class="fila-elipsis"><th>⋮</th><td>⋮</td><td>⋮</td></tr>
+            <tr class="fila-foco"><th>s = 41</th><td>0.00</td><td>0.00</td></tr>
+            <tr class="fila-elipsis"><th>⋮</th><td>⋮</td><td>⋮</td></tr>
+            <tr><th style="color:var(--papel);">s = 71</th><td>0.00</td><td>0.00</td></tr>
+          </tbody>
+        </table>
+        <dl class="tabla-q-leyenda">
+          <div><dt><span class="mono">estado s</span></dt><dd>El sobre codificado: cada una de las 72 combinaciones de señales. La fila resaltada es nuestra carta.</dd></div>
+          <div><dt><span class="mono">Q(s, aceptar)</span></dt><dd>Lo que el agente estima que vale <em>aceptar</em> ese sobre.</dd></div>
+          <div><dt><span class="mono">Q(s, descartar)</span></dt><dd>Lo que estima que vale <em>descartarlo</em>.</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <nav style="margin-top:2rem;display:flex;justify-content:space-between;font-family:var(--datos);font-size:.85rem;">
+    <a href="#cap-agente" style="border:0;color:var(--lacre);">← Volver al indice</a>
+    <a href="#pieza-2" style="border:0;color:var(--lacre);">Pieza 2 →</a>
+  </nav>
+</section>
+
+<!-- ===================== PIEZA 2 ===================== -->
+<section id="pieza-2" class="cap">
+  <p class="kicker">Pieza 2</p>
+  <h2 style="font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.8vw,2rem);">Como aprende: la regla de actualizacion</h2>
+  <div class="medida">
+    <p>Despues de cada eleccion, el agente recibe feedback. Con el, una funcion redefine el valor <span class="mono">Q(s, a)</span> para la proxima vez que aparezca ese caso. La funcion para redefinir este valor es:</p>
+    <p class="ecuacion mono">Q(s,a) ← Q(s,a) + α · [ r + γ · max<sub>a′</sub> Q(s′,a′) − Q(s,a) ]</p>
+    <p><strong>Elementos:</strong></p>
+    <dl class="tabla-q-leyenda">
+      <div><dt><span class="mono">Q(s, a)</span></dt><dd>El valor actual de la casilla: lo que hoy estima el agente para esa accion en ese estado.</dd></div>
+      <div><dt><span class="mono var-r">r</span></dt><dd>La recompensa que acaba de recibir tras actuar.</dd></div>
+      <div><dt><span class="mono">α</span></dt><dd>La tasa de aprendizaje: cuanto corrige de golpe en cada paso.</dd></div>
+      <div><dt><span class="mono">γ</span></dt><dd>El factor de descuento: cuanto pesa lo que pueda venir despues.</dd></div>
+      <div><dt><span class="mono">max<sub>a′</sub> Q(s′, a′)</span></dt><dd>El mejor valor alcanzable desde el estado siguiente <span class="mono">s′</span>.</dd></div>
+    </dl>
+    <p>El termino entre corchetes es el <strong>error de prediccion</strong>: la diferencia entre lo que el agente esperaba (<span class="mono">Q(s,a)</span>) y lo que observa al actuar (<span class="mono var-r">r</span> mas la mejor recompensa futura estimada). Si es positivo, la accion salio mejor de lo previsto y su valor sube; si es negativo, baja. A diferencia del aprendizaje supervisado, no hay un profesor que indique la decision correcta: solo este error, que ajusta la tabla <span class="mono">Q</span> paso a paso.</p>
+
+    <p>Veamoslo en accion con la carta de la Pieza 1. La recompensa <span class="mono var-r">r</span> sale de la <strong>matriz de confusion</strong>, que cruza la accion del agente con la clasificacion real del sobre:</p>
+
+    <div class="agente-piezas">
+      <div class="agente-piezas__col">
+        <h4 class="pieza-sub">Carta de ejemplo</h4>
+        <div id="agente-sobre-p2" class="cap1-sobre"></div>
+      </div>
+      <div class="agente-piezas__col">
+        <h4 class="pieza-sub">El agente <strong style="font-size:1.15rem;color:var(--lacre);font-weight:700;">ACEPTO</strong> la carta — ¿que recompensa recibe?</h4>
+        <table class="matriz">
+          <thead><tr><th></th><th>El sobre era <strong>legitimo</strong></th><th>El sobre era <strong>spam</strong></th></tr></thead>
+          <tbody>
+            <tr><th>aceptar</th><td class="bien" style="background:rgba(79,179,154,.2);font-weight:700;">+5 <span class="cel-nota">acierto ←</span></td><td class="regular">−2 <span class="cel-nota">molestia</span></td></tr>
+            <tr><th>descartar</th><td class="mal">−20 <span class="cel-nota">carta rota</span></td><td class="bien">+3 <span class="cel-nota">acierto</span></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:.88rem;color:var(--penumbra);">El agente <strong>acepto</strong> y la carta era <strong>legitima</strong>. La celda resaltada es el acierto: <span class="mono" style="color:var(--sano);">r = +5</span>.</p>
+      </div>
+    </div>
+
+    <div class="calculo__bloque" style="margin-top:2rem;">
+      <h4 class="pieza-sub">Reemplazando en la funcion de actualizacion</h4>
+      <p>La carta <span class="mono">s = 41</span> fue aceptada y era legitima. Estos son los valores para la ecuacion:</p>
+      <table class="matriz" style="max-width:100%;margin:.4rem 0;">
+        <thead><tr><th style="font-size:1rem;">Variable</th><th style="font-size:1rem;">Valor</th><th style="font-size:1rem;text-align:left;">Significado</th></tr></thead>
+        <tbody>
+          <tr><th class="mono" style="padding:.3rem .5rem;font-size:1rem;">Q(s, a)</th><td class="mono" style="padding:.3rem .5rem;font-size:1rem;">0.00</td><td style="padding:.3rem .5rem;font-size:1rem;text-align:left;">Valor anterior de <span class="mono">Q(41, aceptar)</span></td></tr>
+          <tr><th class="mono" style="padding:.3rem .5rem;font-size:1rem;">α</th><td class="mono" style="padding:.3rem .5rem;font-size:1rem;">0.1</td><td style="padding:.3rem .5rem;font-size:1rem;text-align:left;">Tasa de aprendizaje</td></tr>
+          <tr><th class="mono" style="padding:.3rem .5rem;font-size:1rem;">r</th><td class="mono" style="padding:.3rem .5rem;font-size:1rem;color:var(--sano);">+5</td><td style="padding:.3rem .5rem;font-size:1rem;text-align:left;">Recompensa por acertar (legitimo + aceptar)</td></tr>
+          <tr><th class="mono" style="padding:.3rem .5rem;font-size:1rem;">γ</th><td class="mono" style="padding:.3rem .5rem;font-size:1rem;">0.9</td><td style="padding:.3rem .5rem;font-size:1rem;text-align:left;">Factor de descuento</td></tr>
+          <tr><th class="mono" style="padding:.3rem .5rem;font-size:1rem;">max Q(s′, a′)</th><td class="mono" style="padding:.3rem .5rem;font-size:1rem;">0.00</td><td style="padding:.3rem .5rem;font-size:1rem;text-align:left;">Mejor valor del estado siguiente</td></tr>
+        </tbody>
+      </table>
+
+      <h4 class="pieza-sub" style="color:var(--lacre);margin-top:1.6rem;">Remplazo en la formula</h4>
+      <p class="mono" style="font-size:.95rem;margin:.2rem 0;">Q(41, aceptar) = 0.00 + 0.1 · [ 5 + 0.9 · 0.00 − 0.00 ]</p>
+      <p class="mono" style="font-size:.95rem;margin:.2rem 0;">Q(41, aceptar) = 0.1 · 5</p>
+      <p class="mono" style="font-size:.95rem;margin:.2rem 0;">Q(41, aceptar) = <strong style="color:var(--sano);">0.50</strong></p>
+
+      <h4 class="pieza-sub" style="color:var(--lacre);margin-top:1.4rem;">Interpretacion de resultados</h4>
+      <p style="font-size:.9rem;color:var(--penumbra);"><span class="mono">Q(41, aceptar) = 0.50</span> significa que, tras esta experiencia, el agente valora <em>aceptar</em> ese sobre en <span class="mono">0.50</span>. Es una preferencia temprana: aún no ha visto suficientes casos como para estar seguro, pero ya aprendió que aceptar esta combinación de señales no le fue mal. Con más repeticiones, ese número se asentará en un valor firme que reflejará si realmente conviene o no aceptar.</p>
+    </div>
+
+    <div class="calculo__bloque" style="margin-top:0;">
+      <h4 class="pieza-sub" style="color:var(--lacre);text-shadow:0 0 8px rgba(240,169,59,.5);">La tabla Q, un paso despues</h4>
+      <p>La celda <span class="mono">Q(41, aceptar)</span> ya no es cero:</p>
+      <div style="max-width:30rem;">
+        <table class="matriz matriz--q">
+          <thead>
+            <tr><th>estado <span class="mono">s</span></th><th><span class="mono">Q(s, aceptar)</span></th><th><span class="mono">Q(s, descartar)</span></th></tr>
+          </thead>
+          <tbody>
+            <tr><th style="color:var(--papel);">s = 0</th><td>0.00</td><td>0.00</td></tr>
+            <tr><th>s = 1</th><td>0.00</td><td>0.00</td></tr>
+            <tr class="fila-elipsis"><th>⋮</th><td>⋮</td><td>⋮</td></tr>
+            <tr class="fila-foco"><th>s = 41</th><td style="color:var(--sano);font-weight:700;">0.50</td><td>0.00</td></tr>
+            <tr class="fila-elipsis"><th>⋮</th><td>⋮</td><td>⋮</td></tr>
+            <tr><th style="color:var(--papel);">s = 71</th><td>0.00</td><td>0.00</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <nav style="margin-top:2rem;display:flex;justify-content:space-between;font-family:var(--datos);font-size:.85rem;">
+    <a href="#pieza-1" style="border:0;color:var(--lacre);">← Pieza 1</a>
+    <a href="#cap-agente" style="border:0;color:var(--lacre);">← Índice</a>
+    <a href="#pieza-3" style="border:0;color:var(--lacre);">Pieza 3 →</a>
+  </nav>
+</section>
+
+<!-- ===================== PIEZA 3 ===================== -->
+<section id="pieza-3" class="cap">
+  <p class="kicker">Pieza 3</p>
+  <h2 style="font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.8vw,2rem);">Las dos perillas: <span class="mono">α</span> y <span class="mono">γ</span></h2>
+  <div class="medida">
+    <p>La regla trae dos números que fijamos nosotros y gobiernan <em>cómo</em> aprende.</p>
+    <div class="conceptos">
+      <div class="concepto"><span class="concepto__k">Tasa de aprendizaje <span class="mono">α = 0.1</span></span><p>Cuánto corrige de golpe tras cada carta. Baja (<span class="mono">0.1</span>) significa que confía poco en una sola experiencia y promedia muchas: así un spam raro que <em>parecía</em> legítimo no borra de un plumazo todo lo aprendido.</p></div>
+      <div class="concepto"><span class="concepto__k">Factor de descuento <span class="mono">γ = 0.9</span></span><p>Cuánto le importa lo que venga después, no solo el premio inmediato. En la sala de correo cada sobre se juzga casi por sí mismo, pero <span class="mono">γ</span> mantiene al agente atento a que sus decisiones de hoy moldean el flujo de mañana.</p></div>
+    </div>
+
+    <h4 class="pieza-sub" style="margin-top:2.6rem;">La misma carta, tres α distintos</h4>
+    <p class="lista-perillas__intro">Retomemos la carta <span class="mono">s = 41</span> de la Pieza 2:</p>
+    <ul class="lista-perillas">
+      <li>El agente <strong>aceptó</strong> la carta y esta era <strong>legítima</strong>, así que <span class="mono">r = +5</span>.</li>
+      <li>Al ser la primera visita a este estado, <span class="mono">Q(s,a) = 0,00</span>.</li>
+    </ul>
+    <p class="lista-perillas__cierre">En este ejemplo solo cambia <span class="mono">α</span>. La actualización es siempre la misma: <strong><span class="mono">Q = 0 + α · 5</span></strong>. Lo único que varía es la magnitud del ajuste que recibe la tabla:</p>
+
+    <div class="scn-eje">
+      <span>Corrige poco</span>
+      <span class="eje-raya"></span>
+      <span>Corrige mucho</span>
+    </div>
+    <div class="scn-wrap">
+      <div class="scn scn--greedy">
+        <div class="scn-head"><span class="scn-eps">α = 0,02</span></div>
+        <p class="scn-body">Casi no corrige. Cada carta pesa casi nada en la tabla: hacen falta decenas de repeticiones para que un patrón se note. Estable, pero aprende muy despacio.</p>
+        <div class="scn-cuando"><span class="cuando-k">Tras este acierto:</span> <span class="cuando-v mono">Q(41,aceptar) = 0,10</span></div>
+      </div>
+      <div class="scn scn--mixed">
+        <div class="scn-head"><span class="scn-eps">α = 0,1</span></div>
+        <p class="scn-body">El equilibrio elegido para este agente. Corrige lo suficiente para aprender rápido, sin que una carta atípica voltee de un plumazo lo acumulado.</p>
+        <div class="scn-cuando"><span class="cuando-k">Tras este acierto:</span> <span class="cuando-v mono">Q(41,aceptar) = 0,50</span></div>
+      </div>
+      <div class="scn scn--explore">
+        <div class="scn-head"><span class="scn-eps">α = 0,9</span></div>
+        <p class="scn-body">Corrige casi todo de una vez. Una sola carta atípica puede borrar en un paso lo que costó cien cartas aprender.</p>
+        <div class="scn-cuando"><span class="cuando-k">Tras este acierto:</span> <span class="cuando-v mono">Q(41,aceptar) = 4,50</span></div>
+      </div>
+    </div>
+
+    <h4 class="pieza-sub" style="margin-top:2.6rem;">Cuánto pesa hoy una recompensa futura</h4>
+    <p class="lista-perillas__intro">El factor <span class="mono var-g">γ</span> responde a una pregunta distinta a la de <span class="mono">α</span>: no cuánto corregir, sino cuánto vale <em>hoy</em> una recompensa que llegará más adelante.</p>
+    <ul class="lista-perillas">
+      <li>En la Pieza 2, <span class="mono var-g">γ</span> no cambió nada: al ser la primera visita, todavía no había ningún valor futuro aprendido (<span class="mono">max Q(s′,·) = 0</span>), así que no había nada que descontar.</li>
+      <li>Su efecto real aparece cuando el agente sí conoce el valor de estados futuros y debe decidir cuánto confiar hoy en ellos.</li>
+      <li>La regla es simple: una recompensa que llegará dentro de <span class="mono">n</span> sobres vale hoy solo <span class="mono"><span class="var-g">γ</span>ⁿ</span>. Cuanto más lejos está, menos pesa.</li>
+    </ul>
+    <p class="ecuacion mono">Q(s,a) ← Q(s,a) + α · [ r + <strong class="var-g">γ</strong> · max<sub>a′</sub> Q(s′,a′) − Q(s,a) ]</p>
+    <p class="lista-perillas__cierre">Dentro de la fórmula, <span class="mono var-g">γ</span> multiplica siempre al mejor valor futuro estimado. En esta carta ese producto es <span class="mono"><span class="var-g">γ</span> · 0 = 0</span>: por eso no se nota. Si el estado siguiente ya valiera <span class="mono">max Q(s′,a′) = 5</span>, con <span class="mono"><span class="var-g">γ</span> = 0,9</span> el agente sumaría <span class="mono">4,5</span> a la recompensa inmediata; con <span class="mono"><span class="var-g">γ</span> = 0,1</span>, solo <span class="mono">0,5</span>. Así se ve esa diferencia mirando <span class="mono">n</span> sobres hacia adelante:</p>
+
+    <div class="decae">
+      <div class="decae__barra"><span class="decae__v">0,90</span><span class="decae__vara" style="--h:90%"></span><span class="decae__n">n=1</span></div>
+      <div class="decae__barra"><span class="decae__v">0,81</span><span class="decae__vara" style="--h:81%"></span><span class="decae__n">n=2</span></div>
+      <div class="decae__barra"><span class="decae__v">0,73</span><span class="decae__vara" style="--h:73%"></span><span class="decae__n">n=3</span></div>
+      <div class="decae__barra"><span class="decae__v">0,59</span><span class="decae__vara" style="--h:59%"></span><span class="decae__n">n=5</span></div>
+      <div class="decae__barra"><span class="decae__v">0,48</span><span class="decae__vara" style="--h:48%"></span><span class="decae__n">n=7</span></div>
+      <div class="decae__barra"><span class="decae__v">0,35</span><span class="decae__vara" style="--h:35%"></span><span class="decae__n">n=10</span></div>
+    </div>
+    <p class="decae__nota">Con <span class="mono"><span class="var-g">γ</span> = 0,9</span>, una recompensa a diez sobres de distancia todavía pesa más de un tercio (<span class="mono">0,35</span>). Si <span class="mono var-g">γ</span> fuera <span class="mono">0,5</span>, esa misma distancia pesaría apenas <span class="mono">0,001</span>: el agente casi no miraría más allá del sobre siguiente.</p>
+  </div>
+  <nav style="margin-top:2rem;display:flex;justify-content:space-between;font-family:var(--datos);font-size:.85rem;">
+    <a href="#pieza-2" style="border:0;color:var(--lacre);">← Pieza 2</a>
+    <a href="#cap-agente" style="border:0;color:var(--lacre);">← Índice</a>
+    <a href="#pieza-4" style="border:0;color:var(--lacre);">Pieza 4 →</a>
+  </nav>
+</section>
+
+<!-- ===================== PIEZA 4 ===================== -->
+<section id="pieza-4" class="cap">
+  <p class="kicker">Pieza 4</p>
+  <h2 style="font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.8vw,2rem);">Como decide: la politica <span class="mono">ε</span>-greedy</h2>
+  <div class="medida">
+    <p>Disponer de la tabla <span class="mono">Q</span> no es suficiente; el agente también necesita un criterio para decidir cómo utilizar la información aprendida. Para ello se emplea la política <span class="mono">ε</span>-greedy, cuya función es determinar, en cada decisión, si el agente debe <strong>explotar</strong> el conocimiento adquirido o <strong>explorar</strong> alternativas que podrían resultar más beneficiosas.</p>
+    <p>El parámetro <span class="mono">ε</span> define la probabilidad de exploración. Por ejemplo, con <span class="mono">ε = 0,3</span>, el agente explora en el 30 % de las decisiones y explota el conocimiento disponible en el 70 % restante. En cada sobre recibido se genera un valor aleatorio. Si este se encuentra dentro del intervalo definido por <span class="mono">ε</span>, el agente ignora temporalmente la tabla <span class="mono">Q</span> y selecciona de forma aleatoria entre las acciones <strong>aceptar</strong> y <strong>descartar</strong>. En caso contrario, consulta la tabla y elige la acción con el mayor valor <span class="mono">Q</span>, es decir, aquella que, según la experiencia acumulada, ofrece el mejor resultado esperado.</p>
+    <div class="scn-eje">
+      <span>Nunca explora</span>
+      <span class="eje-raya"></span>
+      <span>Siempre explora</span>
+    </div>
+
+    <div class="scn-wrap">
+      <div class="scn scn--greedy">
+        <div class="scn-head">
+          <span class="scn-eps">ε = 0</span>
+        </div>
+        <p class="scn-body">El agente siempre elige la acción de mayor <span class="mono">Q</span>. Nunca explora. Si la tabla tiene ceros, siempre gana la primera opción — no porque sea mejor. Queda atrapado y nunca descubre caminos superiores.</p>
+        <div class="scn-cuando"><span class="cuando-k">¿Cuando se usa?</span> <span class="cuando-v">cuando la política ya es de confianza.</span></div>
+      </div>
+
+      <div class="scn scn--mixed">
+        <div class="scn-head">
+          <span class="scn-eps">ε = 0,3</span>
+        </div>
+        <p class="scn-body">El <span class="mono">70 %</span> de las veces elige la mejor acción según <span class="mono">Q</span>; el <span class="mono">30 %</span> restante prueba al azar — suficiente para corregirse si <span class="mono">Q</span> está equivocado, sin renunciar a lo aprendido.</p>
+        <div class="scn-cuando"><span class="cuando-k">¿Cuando se usa?</span> <span class="cuando-v">durante la mayor parte del entrenamiento.</span></div>
+      </div>
+
+      <div class="scn scn--explore">
+        <div class="scn-head">
+          <span class="scn-eps">ε = 1</span>
+        </div>
+        <p class="scn-body">Ignora la tabla <span class="mono">Q</span> y elige al azar: cada sobre tiene <span class="mono">50 %</span> de ir al buzón y <span class="mono">50 %</span> a la papelera. Es el punto de partida obligado — con una tabla de ceros no hay nada que explotar.</p>
+        <div class="scn-cuando"><span class="cuando-k">¿Cuando se usa?</span> <span class="cuando-v">al inicio del entrenamiento.</span></div>
+      </div>
+    </div>
+  </div>
+  <nav style="margin-top:2rem;display:flex;justify-content:space-between;font-family:var(--datos);font-size:.85rem;">
+    <a href="#pieza-3" style="border:0;color:var(--lacre);">← Pieza 3</a>
+    <a href="#cap-agente" style="border:0;color:var(--lacre);">← Índice</a>
+    <a href="#trayectoria" style="border:0;color:var(--lacre);">Trayectoria →</a>
+  </nav>
+</section>
+
+<!-- ===================== TRAYECTORIA COMPLETA ===================== -->
+<section id="trayectoria" class="cap">
+  <p class="kicker">Cierre</p>
+  <h2 style="font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.8vw,2rem);">La trayectoria completa</h2>
+  <div class="medida">
+    <p style="margin:0 0 1.4rem;color:var(--penumbra);font-size:.95rem;">Las piezas anteriores describen por separado cada parte del mismo mecanismo: qué es un estado y cómo se organiza en la tabla (Pieza 1), cómo una recompensa corrige esa tabla (Pieza 2), cuánto pesan el presente y el futuro en esa corrección (Pieza 3), y cuándo conviene confiar en lo aprendido o probar algo distinto (Pieza 4). Ninguna de esas piezas actúa por su cuenta: juntas son, sobre y sobre, el mecanismo completo con el que el agente aprende.</p>
+    <p style="margin:0 0 1.4rem;color:var(--penumbra);font-size:.95rem;">A lo largo de miles de episodios, ese mecanismo es lo que entrena al agente: la tabla <span class="mono">Q</span> pasa de estar en ceros a reflejar qué acción conviene en cada estado, mientras <span class="mono">ε</span> acompaña esa transición dejando que el agente pase, poco a poco, de decidir al azar a decidir por experiencia.</p>
+    <div class="calculo__coda" style="margin-top:0;">
+      <div style="display:flex;align-items:center;gap:14px;font-family:var(--datos);font-size:.85rem;flex-wrap:wrap;margin-bottom:1.4rem;">
+        <span style="padding:8px 18px;border-radius:var(--radio);border:1px solid var(--lacre-tenue);color:var(--lacre);">ε ≈ 1,0 → tantear</span>
+        <span style="color:var(--penumbra);font-size:1.1rem;">→</span>
+        <span style="padding:8px 18px;border-radius:var(--radio);border:1px solid var(--marco);color:var(--penumbra);">ε decrece</span>
+        <span style="color:var(--penumbra);font-size:1.1rem;">→</span>
+        <span style="padding:8px 18px;border-radius:var(--radio);border:1px solid var(--sano);color:var(--sano);">ε ≈ 0 → confiar</span>
+      </div>
+      <p style="margin:0;color:var(--penumbra);font-size:.95rem;">Al principio <strong style="font-style:italic;color:var(--papel);font-size:1.05em;">ε = 1,0</strong>: el agente solo tantea, porque una tabla de ceros no tiene nada que explotar. Con el entrenamiento, <strong style="font-style:italic;color:var(--papel);font-size:1.05em;">ε</strong> baja hasta casi cero y el agente pasa de tantear a confiar. Sin exploración no se descubre nada nuevo; sin explotación lo aprendido nunca se aprovecha. Ese es el dilema que resuelve esta política.</p>
+    </div>
+  </div>
+  <nav style="margin-top:2rem;display:flex;justify-content:space-between;font-family:var(--datos);font-size:.85rem;">
+    <a href="#pieza-4" style="border:0;color:var(--lacre);">← Pieza 4</a>
+    <a href="#cap-agente" style="border:0;color:var(--lacre);">← Índice</a>
+    <a href="#cap3" style="border:0;color:var(--lacre);">Capítulo 3 →</a>
+  </nav>
+</section>
+
+<!-- ===================== CAPITULO 3 ===================== -->
+<section id="cap3" class="cap">
+  <p class="kicker">Capítulo 3</p>
+  <h2>El agente, entrenando en vivo</h2>
+  <p class="lede">Todo lo descrito en el Capítulo 2 ocurre ahora frente a tus ojos: cada sobre dispara una decisión, una recompensa y una corrección de la tabla <span class="mono">Q</span>, mientras <span class="mono">ε</span> va cediendo terreno de explorar a explotar.</p>
+
+  <div class="medida">
+    <div class="sim">
+      <div class="sim__panel sim__panel--sobre">
+        <h4 class="pieza-sub">Sobre actual</h4>
+        <div id="sim-sobre" class="cap1-sobre"></div>
+        <div class="sim__accion">
+          <span id="sim-etiqueta" class="etq"></span>
+          <span id="sim-modo" class="sim__modo"></span>
+          <span id="sim-accion-txt" class="sim__accion-txt"></span>
+          <span id="sim-reward" class="sim__reward mono"></span>
+        </div>
+      </div>
+
+      <div class="sim__panel sim__panel--stats">
+        <h4 class="pieza-sub">Estado del entrenamiento</h4>
+        <dl class="sim__stats">
+          <div><dt>Episodio</dt><dd class="mono" id="sim-episodio">0 / 5000</dd></div>
+          <div><dt>Sobre</dt><dd class="mono" id="sim-paso">0 / 50</dd></div>
+          <div><dt><span class="mono">ε</span> (epsilon)</dt><dd class="mono" id="sim-epsilon">1.000</dd></div>
+          <div><dt>Recompensa (episodio)</dt><dd class="mono" id="sim-reward-ep">0</dd></div>
+          <div><dt>Media móvil (20 ep.)</dt><dd class="mono" id="sim-reward-media">—</dd></div>
+        </dl>
+        <div class="sim__gauge" aria-hidden="true"><span id="sim-epsilon-barra" class="sim__gauge-fill"></span></div>
+        <div class="sim__gauge-etq" aria-hidden="true"><span>Explotar</span><span>Explorar</span></div>
+      </div>
+    </div>
+
+    <div class="sim__qwrap">
+      <h4 class="pieza-sub">La tabla <span class="mono">Q</span> completa (72 estados), actualizándose en vivo</h4>
+      <div class="sim__qscroll">
+        <table class="matriz matriz--q" id="sim-tabla-q">
+          <thead>
+            <tr><th>estado <span class="mono">s</span></th><th><span class="mono">Q(s, aceptar)</span></th><th><span class="mono">Q(s, descartar)</span></th></tr>
+          </thead>
+          <tbody id="sim-tabla-q-body"><!-- las 72 filas se generan en simulacion.js --></tbody>
+        </table>
+      </div>
+      <p class="cel-nota" style="margin-top:.6rem;">Cada fila solo se corrige cuando ese estado aparece. La fila resaltada sigue al sobre que se está procesando en este instante; <span class="mono">s = 41</span> queda marcada de forma permanente porque es nuestro ejemplo de las Piezas 2 y 3.</p>
+    </div>
+
+    <div class="sim__chartwrap">
+      <h4 class="pieza-sub">Recompensa total por episodio</h4>
+      <svg id="sim-grafico" class="sim__grafico" viewBox="0 0 600 160" preserveAspectRatio="none" role="img" aria-label="Recompensa por episodio a lo largo del entrenamiento"></svg>
+    </div>
+
+    <div class="sim__controles">
+      <button type="button" id="sim-play" class="sim__play">▶ Reproducir</button>
+      <div class="segmentado" id="sim-velocidad">
+        <button type="button" data-v="1" class="activo">×1</button>
+        <button type="button" data-v="10">×10</button>
+        <button type="button" data-v="50">×50</button>
+        <button type="button" data-v="250">×250</button>
+      </div>
+      <button type="button" id="sim-final" class="sim__secundario">Saltar al final</button>
+      <button type="button" id="sim-reset" class="sim__secundario">Reiniciar</button>
+    </div>
+    <div class="sim__progreso" aria-hidden="true"><span id="sim-progreso-fill" class="sim__progreso-fill"></span></div>
+  </div>
+
+  <nav style="margin-top:2rem;display:flex;justify-content:space-between;font-family:var(--datos);font-size:.85rem;">
+    <a href="#cap-agente" style="border:0;color:var(--lacre);">← Capítulo 2</a>
+    <a href="#anexoA" style="border:0;color:var(--lacre);">Anexo A →</a>
+  </nav>
+</section>
+
+<!-- ===================== ANEXO A ===================== -->
+<section id="anexoA" class="cap cap--anexo">
+  <p class="kicker">Anexo A · documentacion tecnica</p>
+  <h2>El modelo</h2>
+  <div class="medida anexo-cuerpo">
+    <h3>¿Por que esto es deteccion de anomalias?</h3>
+    <p>La deteccion de anomalias identifica eventos poco frecuentes que se desvian de un patron esperado, mayormente «normal» (ref. 3). El correo anomalo de este trabajo encaja ahi: spam y suplantacion son minoria (30 % y 10 % del trafico, ver Anexo B) frente al correo legitimo, y se definen precisamente por desviarse de las señales tipicas de un remitente de confianza — contacto nuevo o reputacion en caida, urgencia inusual, enlaces sin patron previo, horario atipico. La suplantacion es el caso limite: no es una categoria aparte con reglas propias, es la <em>cola</em> de la distribucion, camuflada dentro de lo que parece normal (buena reputacion, remitente conocido). Detectarla exige aprender la combinacion de señales, no una sola regla — que es exactamente lo que el agente hace.</p>
+
+    <h3>El proceso de decision (MDP)</h3>
+    <p>Modelamos la sala como una tupla <span class="mono">(S, A, R, T, γ)</span>:</p>
+    <ul>
+      <li><span class="mono">S</span> — estado: <span class="mono">(remitente, reputacion, enlaces, urgencia, hora)</span>. Cardinalidades <span class="mono">2 × 3 × 3 × 2 × 2 = 72</span>.</li>
+      <li><span class="mono">A</span> — acciones: <span class="mono">{ aceptar, descartar }</span>.</li>
+      <li><span class="mono">R</span> — recompensa: la matriz de confusion (<span class="mono">+5, −2, −20, +3</span>).</li>
+      <li><span class="mono">T</span> — transicion: el entorno revela la etiqueta verdadera y actualiza la reputacion del remitente (sube 1 con legitimo, baja 2 con spam; se necesitan 2 aciertos para subir un nivel, 1 spam para bajar).</li>
+      <li><span class="mono">γ = 0.9</span> — factor de descuento.</li>
+    </ul>
+
+    <h3>Q-learning tabular, off-policy</h3>
+    <p class="ecuacion mono">Q(s,a) ← Q(s,a) + α · [ r + γ · max<sub>a′</sub> Q(s′,a′) − Q(s,a) ]</p>
+    <p>Actualizacion <em>off-policy</em>: el objetivo usa <span class="mono">max<sub>a′</sub> Q(s′,a′)</span> (la mejor accion futura) aunque el agente vaya a explorar en <span class="mono">s′</span>. Por eso converge a la politica optima mientras todavia explora. Hiperparametros: <span class="mono">α = 0.1</span>, <span class="mono">γ = 0.9</span>, <span class="mono">ε: 1.0 → 0.05</span> con decaimiento exponencial sobre 5 000 episodios. Q se inicializa en 0 (sin prejuicios).</p>
+
+    <h3>¿Por que 72 estados y no mas?</h3>
+    <p>La discretizacion se eligio <strong>para ser legible, no para ser optima</strong>. Binear los enlaces en <span class="mono">{0, 1, varios}</span> pierde informacion (¿siete enlaces es igual que tres?), y colapsar la hora en dos bins ignora patrones finos. A cambio, ganamos una Q-table que cabe en un archivador de 72 sobres que el usuario puede leer de un vistazo. Es una decision de comunicacion, asumida.</p>
+
+    <h3>Nota honesta: ¿MDP o bandit contextual?</h3>
+    <p>En este entorno la reputacion se actualiza segun la <em>etiqueta verdadera</em> del sobre, no segun la accion del agente. Estrictamente, entonces, la accion no cambia el estado siguiente, y el problema se acerca mas a un <strong>bandit contextual con contexto no estacionario</strong> que a un MDP con acoplamiento fuerte. Lo que sostiene el interes secuencial es que el estado de un remitente <em>evoluciona con la trayectoria</em> — el remitente comprometido es el caso claro: fue de confianza y dejo de serlo. Como el maximo <span class="mono">Q(s′,·)</span> es casi constante entre estados (el proximo sobre es en gran medida independiente del actual), <span class="mono">γ</span> agrega sobre todo un desplazamiento, y la politica aprendida coincide en la practica con la optima por recompensa inmediata. Preferimos decirlo a exagerar el rol de <span class="mono">γ</span>.</p>
+
+    <h3>¿Por que RL y no otra cosa?</h3>
+    <ul>
+      <li><strong>Regla fija</strong> — <span class="mono">descartar si desconocido</span>: rapida de escribir, pero rompe los legitimos nuevos y traga toda la suplantacion. Pierde frente a la politica aprendida.</li>
+      <li><strong>Naive Bayes / filtro supervisado</strong>: con un buen corpus etiquetado, probablemente supere a RL en exactitud pura. Su debilidad es el costo asimetrico y el desbalance de clases (ref. 3, 4), que hay que inyectar a mano. RL lo incorpora en la recompensa de forma natural.</li>
+      <li><strong>Deep Q-Network (DQN)</strong>: innecesario aqui — el estado es diminuto — y, sobre todo, <strong>no se podria visualizar</strong>: una red no tiene un archivador de 72 sobres que pintar. La tabla es una decision de diseño, no una limitacion.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== ANEXO B ===================== -->
+<section id="anexoB" class="cap cap--anexo">
+  <p class="kicker">Anexo B · documentacion tecnica</p>
+  <h2>Los datos</h2>
+  <div class="medida anexo-cuerpo">
+    <p>Todo el correo es sintetico: lo genera el modulo <span class="mono">js/rl.js</span>, el nucleo del modelo (independiente de esta pagina, verificable por consola). Un episodio es una <strong>jornada de 50 sobres</strong> provenientes de <strong>15 remitentes fijos</strong>. Cada sobre se muestrea de una de cuatro poblaciones, con caracteristicas <em>estocasticas</em> (por eso ninguna senal sola clasifica perfecto):</p>
+    <div class="tabla-scroll">
+      <table class="resultados">
+        <thead><tr><th>Poblacion</th><th class="num">%</th><th>Etiqueta</th><th>Firma tipica</th></tr></thead>
+        <tbody>
+          <tr><td>Legitimo cotidiano</td><td class="num mono">45</td><td>legitimo</td><td>Conocido, 0–1 enlaces, sin urgencia, laboral.</td></tr>
+          <tr><td>Legitimo nuevo</td><td class="num mono">15</td><td>legitimo</td><td>Desconocido pero real. 0–1 enlaces, sin urgencia.</td></tr>
+          <tr><td>Spam burdo</td><td class="num mono">30</td><td>spam</td><td>Desconocido, varios enlaces, urgencia, madrugada.</td></tr>
+          <tr><td>Suplantacion</td><td class="num mono">10</td><td>spam</td><td>Conocido y de buena reputacion, varios enlaces, urgencia.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Las tres trampas del entorno</h3>
+    <p>Tres de los 15 remitentes son <strong>comprometidos</strong>: envian correo legitimo (y construyen buena reputacion) hasta un punto aleatorio de la jornada, y luego pasan a enviar suplantacion. Ese giro es la razon por la que el agente no puede memorizar «confio en el remitente_07». Junto con el legitimo nuevo y la suplantacion, forman las tres trampas que castigan, respectivamente, a quien confie ciegamente en lo desconocido, en lo conocido, o en la reputacion.</p>
+    <h3>Reproducibilidad</h3>
+    <p>El generador usa un RNG con semilla fija (mulberry32), de modo que el entrenamiento es reproducible y todas las estrategias se evaluan sobre <em>exactamente el mismo</em> flujo de sobres. La verificacion en terminal (<span class="mono">node scripts/verify.cjs</span>) comprueba, sin abrir el navegador, que la curva de recompensa sube y que la politica aprendida le gana a la regla de reputacion.</p>
+  </div>
+
+  <div class="referencias">
+    <h3>Referencias</h3>
+    <ol>
+      <li>Sutton, R. S., &amp; Barto, A. G. (2018). <em>Reinforcement Learning: An Introduction</em> (2.ª ed.). MIT Press.</li>
+      <li>Watkins, C. J. C. H., &amp; Dayan, P. (1992). Q-learning. <em>Machine Learning</em>, 8(3–4), 279–292.</li>
+      <li>Pang, G., Shen, C., Cao, L., &amp; van den Hengel, A. (2021). Deep learning for anomaly detection: A review. <em>ACM Computing Surveys</em>, 54(2).</li>
+      <li>Sahami, M., Dumais, S., Heckerman, D., &amp; Horvitz, E. (1998). A Bayesian approach to filtering junk e-mail. <em>AAAI Workshop on Learning for Text Categorization</em>.</li>
+      <li>Cormack, G. V. (2008). Email spam filtering: A systematic review. <em>Foundations and Trends in Information Retrieval</em>, 1(4), 335–455.</li>
+    </ol>
+  </div>
+
+  <footer class="pie">
+    <p>El Clasificador — Sistemas Inteligentes, Universidad de La Frontera. Codigo, datos y modelo: 100 % en el navegador, cero dependencias de ejecucion. <a href="README.md">README</a>.</p>
+  </footer>
+</section>
+
+</main>
+
+<!-- Componentes (scripts clasicos: funcionan en GitHub Pages y en local) -->
+<script src="js/rl.js"></script>
+<script src="js/envelope.js"></script>
+<script src="js/scroll.js"></script>
+<script src="js/simulacion.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

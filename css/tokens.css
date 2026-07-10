@@ -1,0 +1,34 @@
+/* ============================================================================
+   tokens.css — Nocturno de Colmena. Unica fuente de verdad del sistema visual.
+   La direccion nunca fue sobre abejas: era sobre LUZ COMO INFORMACION en la
+   oscuridad. Una sala de correo de noche es exactamente el mismo lugar.
+   ============================================================================ */
+:root {
+  /* Fondos — la sala vacia */
+  --noche:  #0E1220;   /* fondo de pagina */
+  --mesa:   #161C2E;   /* superficies, paneles, tarjetas */
+  --marco:  #2A3350;   /* bordes, divisores, reglas */
+
+  /* Texto */
+  --papel:    #E7ECF6; /* texto principal */
+  --penumbra: #7F8BA8; /* texto secundario, etiquetas */
+  --lejano:   #3E4C6E; /* deshabilitado, grillas */
+
+  /* Senal — confianza */
+  --lacre:      #F0A93B; /* acento primario · aceptar */
+  --lacre-tenue:#A67C4A;
+
+  /* Estados */
+  --rasgado: #E24B3A;  /* carta real perdida · recompensa -20 */
+  --sano:    #4FB39A;  /* acierto confirmado */
+
+  /* Tipografia */
+  --display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --cuerpo:  'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --datos:   'IBM Plex Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  /* Ritmo */
+  --radio: 3px;              /* uniforme. Sobres y celdas Q son la excepcion: 0px */
+  --medida: 34rem;           /* ancho de columna de lectura */
+  --gutter: clamp(1.2rem, 4vw, 3rem);
+}
