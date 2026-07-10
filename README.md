@@ -7,7 +7,7 @@ de anomalías. Un agente aprende a clasificar cartas (correo legítimo o
 anómalo: spam y suplantación / phishing) por ensayo y error, hasta superar a
 un conjunto de reglas simples.
 
-## Qué es, técnicamente
+## ¿De que se trata el proyecto?
 
 - Agente de Q-learning tabular sobre 72 estados y 2 acciones
   (`aceptar` / `descartar`).
@@ -16,8 +16,6 @@ un conjunto de reglas simples.
   política aprendida es conservadora.
 - `index.html` explica el modelo con ejemplos estáticos y, en el Capítulo 3,
   entrena al agente en vivo, en el navegador.
-- `js/rl.js` (formato UMD) no depende de la interfaz. El navegador lo carga
-  para entrenar en vivo, y también corre solo, desde la terminal con Node.
 
 ## Cómo verlo
 
@@ -29,9 +27,8 @@ Funciona directo desde el sistema de archivos, sin servidor ni build.
 ## Informe
 
 Este README es el informe breve de la tarea. También hay una versión más
-formal del mismo contenido en `docs/informe.md`, `docs/informe.html` (lista
-para imprimir o exportar a PDF desde el navegador) y `docs/informe.tex` (para
-compilar a PDF con LaTeX).
+formal del mismo contenido en `docs/informe.tex` (fuente LaTeX) y
+`docs/informe.pdf` (ya compilado, 4 páginas).
 
 ## Estructura del proyecto
 
@@ -52,8 +49,8 @@ clasificador-rl/
 ├─ scripts/
 │  └─ verify.cjs           # Verificación en terminal de js/rl.js
 └─ docs/
-   ├─ informe.md           # Informe breve (2 a 4 páginas)
-   └─ informe.html         # Mismo informe, listo para exportar a PDF
+   ├─ informe.tex          # Informe breve, fuente LaTeX (2 a 4 páginas)
+   └─ informe.pdf          # Mismo informe, ya compilado
 ```
 
 ## El caso de detección de anomalías
