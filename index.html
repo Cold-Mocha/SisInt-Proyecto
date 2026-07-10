@@ -232,7 +232,7 @@
   <p class="kicker">Pieza 2</p>
   <h2 style="font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.8vw,2rem);">Como aprende: la regla de actualizacion</h2>
   <div class="medida">
-    <p>Despues de cada eleccion, el agente recibe feedback. Con el, una funcion redefine el valor <span class="mono">Q(s, a)</span> para la proxima vez que aparezca ese caso. La funcion para redefinir este valor es:</p>
+    <p>Despues de cada eleccion, el agente recibe feedback. Con el, una funcion redefine el valor <span class="mono">Q(s, a)</span> para la proxima vez que aparezca ese caso. La funcion para redefinir este valor es la regla de Q-learning <a href="#ref1" class="cita">[1]</a><a href="#ref2" class="cita">[2]</a>:</p>
     <p class="ecuacion mono">Q(s,a) ← Q(s,a) + α · [ r + γ · max<sub>a′</sub> Q(s′,a′) − Q(s,a) ]</p>
     <p><strong>Elementos:</strong></p>
     <dl class="tabla-q-leyenda">
@@ -388,7 +388,7 @@
   <p class="kicker">Pieza 4</p>
   <h2 style="font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.8vw,2rem);">Como decide: la politica <span class="mono">ε</span>-greedy</h2>
   <div class="medida">
-    <p>Disponer de la tabla <span class="mono">Q</span> no es suficiente. El agente también necesita un criterio para decidir cómo utilizar la información aprendida. Para ello se emplea la política <span class="mono">ε</span>-greedy, cuya función es determinar, en cada decisión, si el agente debe <strong>explotar</strong> el conocimiento adquirido o <strong>explorar</strong> alternativas que podrían resultar más beneficiosas.</p>
+    <p>Disponer de la tabla <span class="mono">Q</span> no es suficiente. El agente también necesita un criterio para decidir cómo utilizar la información aprendida. Para ello se emplea la política <span class="mono">ε</span>-greedy <a href="#ref1" class="cita">[1]</a>, cuya función es determinar, en cada decisión, si el agente debe <strong>explotar</strong> el conocimiento adquirido o <strong>explorar</strong> alternativas que podrían resultar más beneficiosas.</p>
     <p>El parámetro <span class="mono">ε</span> define la probabilidad de exploración. Por ejemplo, con <span class="mono">ε = 0,3</span>, el agente explora en el 30 % de las decisiones y explota el conocimiento disponible en el 70 % restante. En cada sobre recibido se genera un valor aleatorio. Si este se encuentra dentro del intervalo definido por <span class="mono">ε</span>, el agente ignora temporalmente la tabla <span class="mono">Q</span> y selecciona de forma aleatoria entre las acciones <strong>aceptar</strong> y <strong>descartar</strong>. En caso contrario, consulta la tabla y elige la acción con el mayor valor <span class="mono">Q</span>, es decir, aquella que, según la experiencia acumulada, ofrece el mejor resultado esperado.</p>
     <div class="scn-eje">
       <span>Nunca explora</span>
@@ -531,10 +531,10 @@
   <h2>El modelo</h2>
   <div class="medida anexo-cuerpo">
     <h3>¿Por que esto es deteccion de anomalias?</h3>
-    <p>La deteccion de anomalias identifica eventos poco frecuentes que se desvian de un patron esperado, mayormente «normal» (ref. 3). El correo anomalo de este trabajo encaja ahi: spam y suplantacion son minoria (30 % y 10 % del trafico, ver Anexo B) frente al correo legitimo, y se definen precisamente por desviarse de las señales tipicas de un remitente de confianza, como contacto nuevo o reputacion en caida, urgencia inusual, enlaces sin patron previo, horario atipico. La suplantacion es el caso limite: no es una categoria aparte con reglas propias, es la <em>cola</em> de la distribucion, camuflada dentro de lo que parece normal (buena reputacion, remitente conocido). Detectarla exige aprender la combinacion de señales, no una sola regla. Es exactamente lo que el agente hace.</p>
+    <p>La deteccion de anomalias identifica eventos poco frecuentes que se desvian de un patron esperado, mayormente «normal» <a href="#ref3" class="cita">[3]</a>. El correo anomalo de este trabajo encaja ahi: spam y suplantacion son minoria (30 % y 10 % del trafico, ver Anexo B) frente al correo legitimo, y se definen precisamente por desviarse de las señales tipicas de un remitente de confianza, como contacto nuevo o reputacion en caida, urgencia inusual, enlaces sin patron previo, horario atipico. La suplantacion es el caso limite: no es una categoria aparte con reglas propias, es la <em>cola</em> de la distribucion, camuflada dentro de lo que parece normal (buena reputacion, remitente conocido). Detectarla exige aprender la combinacion de señales, no una sola regla. Es exactamente lo que el agente hace.</p>
 
     <h3>El proceso de decision (MDP)</h3>
-    <p>Modelamos la sala como una tupla <span class="mono">(S, A, R, T, γ)</span>:</p>
+    <p>Modelamos la sala como una tupla <span class="mono">(S, A, R, T, γ)</span> <a href="#ref1" class="cita">[1]</a>:</p>
     <ul>
       <li><span class="mono">S</span> es el estado: <span class="mono">(remitente, reputacion, enlaces, urgencia, hora)</span>. Cardinalidades <span class="mono">2 × 3 × 3 × 2 × 2 = 72</span>.</li>
       <li><span class="mono">A</span> son las acciones: <span class="mono">{ aceptar, descartar }</span>.</li>
@@ -543,7 +543,7 @@
       <li><span class="mono">γ = 0.9</span> es el factor de descuento.</li>
     </ul>
 
-    <h3>Q-learning tabular, off-policy</h3>
+    <h3>Q-learning tabular, off-policy <a href="#ref2" class="cita">[2]</a></h3>
     <p class="ecuacion mono">Q(s,a) ← Q(s,a) + α · [ r + γ · max<sub>a′</sub> Q(s′,a′) − Q(s,a) ]</p>
     <p>Actualizacion <em>off-policy</em>: el objetivo usa <span class="mono">max<sub>a′</sub> Q(s′,a′)</span> (la mejor accion futura) aunque el agente vaya a explorar en <span class="mono">s′</span>. Por eso converge a la politica optima mientras todavia explora. Hiperparametros: <span class="mono">α = 0.1</span>, <span class="mono">γ = 0.9</span>, <span class="mono">ε: 1.0 → 0.05</span> con decaimiento exponencial sobre 5 000 episodios. Q se inicializa en 0 (sin prejuicios).</p>
 
@@ -556,7 +556,7 @@
     <h3>¿Por que RL y no otra cosa?</h3>
     <ul>
       <li><strong>Regla fija</strong>, <span class="mono">descartar si desconocido</span>: rapida de escribir, pero rompe los legitimos nuevos y traga toda la suplantacion. Pierde frente a la politica aprendida.</li>
-      <li><strong>Naive Bayes / filtro supervisado</strong>: con un buen corpus etiquetado, probablemente supere a RL en exactitud pura. Su debilidad es el costo asimetrico y el desbalance de clases (ref. 3, 4), que hay que inyectar a mano. RL lo incorpora en la recompensa de forma natural.</li>
+      <li><strong>Naive Bayes / filtro supervisado</strong>: con un buen corpus etiquetado, probablemente supere a RL en exactitud pura. Su debilidad es el costo asimetrico y el desbalance de clases <a href="#ref3" class="cita">[3]</a><a href="#ref4" class="cita">[4]</a><a href="#ref5" class="cita">[5]</a>, que hay que inyectar a mano. RL lo incorpora en la recompensa de forma natural.</li>
       <li><strong>Deep Q-Network (DQN)</strong>: innecesario aqui (el estado es diminuto) y, sobre todo, <strong>no se podria visualizar</strong>: una red no tiene un archivador de 72 sobres que pintar. La tabla es una decision de diseño, no una limitacion.</li>
     </ul>
   </div>
@@ -588,11 +588,11 @@
   <div class="referencias">
     <h3>Referencias</h3>
     <ol>
-      <li>Sutton, R. S., &amp; Barto, A. G. (2018). <em>Reinforcement Learning: An Introduction</em> (2.ª ed.). MIT Press.</li>
-      <li>Watkins, C. J. C. H., &amp; Dayan, P. (1992). Q-learning. <em>Machine Learning</em>, 8(3–4), 279–292.</li>
-      <li>Pang, G., Shen, C., Cao, L., &amp; van den Hengel, A. (2021). Deep learning for anomaly detection: A review. <em>ACM Computing Surveys</em>, 54(2).</li>
-      <li>Sahami, M., Dumais, S., Heckerman, D., &amp; Horvitz, E. (1998). A Bayesian approach to filtering junk e-mail. <em>AAAI Workshop on Learning for Text Categorization</em>.</li>
-      <li>Cormack, G. V. (2008). Email spam filtering: A systematic review. <em>Foundations and Trends in Information Retrieval</em>, 1(4), 335–455.</li>
+      <li id="ref1">Sutton, R. S., &amp; Barto, A. G. (2018). <em>Reinforcement Learning: An Introduction</em> (2.ª ed.). MIT Press.</li>
+      <li id="ref2">Watkins, C. J. C. H., &amp; Dayan, P. (1992). Q-learning. <em>Machine Learning</em>, 8(3–4), 279–292.</li>
+      <li id="ref3">Pang, G., Shen, C., Cao, L., &amp; van den Hengel, A. (2021). Deep learning for anomaly detection: A review. <em>ACM Computing Surveys</em>, 54(2).</li>
+      <li id="ref4">Sahami, M., Dumais, S., Heckerman, D., &amp; Horvitz, E. (1998). A Bayesian approach to filtering junk e-mail. <em>AAAI Workshop on Learning for Text Categorization</em>.</li>
+      <li id="ref5">Cormack, G. V. (2008). Email spam filtering: A systematic review. <em>Foundations and Trends in Information Retrieval</em>, 1(4), 335–455.</li>
     </ol>
   </div>
 
