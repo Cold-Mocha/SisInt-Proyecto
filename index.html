@@ -31,6 +31,7 @@
     <a href="#cap3">3 · El agente en vivo</a>
     <a href="#anexoA" class="nav__anexo nav__anexo--primero">Anexo A · El modelo</a>
     <a href="#anexoB" class="nav__anexo">Anexo B · Los datos</a>
+    <a href="#conclusion" class="nav__anexo">Conclusiones y limitaciones</a>
   </div>
   <div class="nav__controles">
     <button type="button" class="nav__flecha" data-nav-dir="prev" aria-label="Capítulo anterior">‹</button>
@@ -594,6 +595,29 @@
       <li id="ref4">Sahami, M., Dumais, S., Heckerman, D., &amp; Horvitz, E. (1998). A Bayesian approach to filtering junk e-mail. <em>AAAI Workshop on Learning for Text Categorization</em>.</li>
       <li id="ref5">Cormack, G. V. (2008). Email spam filtering: A systematic review. <em>Foundations and Trends in Information Retrieval</em>, 1(4), 335–455.</li>
     </ol>
+  </div>
+
+  <nav style="margin-top:2rem;display:flex;justify-content:space-between;font-family:var(--datos);font-size:.85rem;">
+    <a href="#anexoA" style="border:0;color:var(--lacre);">← Anexo A</a>
+    <a href="#conclusion" style="border:0;color:var(--lacre);">Conclusiones y limitaciones →</a>
+  </nav>
+</section>
+
+<!-- ===================== CONCLUSIONES Y LIMITACIONES ===================== -->
+<section id="conclusion" class="cap cap--anexo">
+  <p class="kicker">Cierre</p>
+  <h2>Conclusiones y limitaciones</h2>
+  <div class="medida anexo-cuerpo">
+    <h3>Qué queda demostrado</h3>
+    <p><em>El Clasificador</em> cumple su objetivo educativo con tres pantallas interactivas: la sala de correo, el archivador de 72 sobres y la jornada comparada. Ahí se ve cómo un agente de <span class="mono">Q-learning</span> aprende, por ensayo y error, una política mejor que un conjunto de reglas fijas razonables frente a errores asimétricos (romper una carta legítima cuesta mucho más que dejar pasar spam) y frente a una anomalía —la suplantación— que se esconde dentro de lo que parece normal. En 500 episodios de prueba, la política aprendida atrapó tres veces más suplantación que la mejor regla fija (40&nbsp;% contra 13&nbsp;%) rompiendo muy pocas cartas reales, y logró la mejor recompensa promedio de las cinco estrategias comparadas.</p>
+
+    <h3>Limitaciones</h3>
+    <ul>
+      <li><strong>Datos sintéticos.</strong> Las cuatro poblaciones de correo, sus proporciones y los montos de la recompensa son decisiones de diseño pensadas para que el problema sea legible, no una medición de correo real. Ningún resultado numérico de la app prueba algo sobre un sistema de filtrado en producción.</li>
+      <li><strong>La reputación no depende de la acción del agente.</strong> En este entorno la reputación de un remitente cambia según su etiqueta verdadera, no según lo que el agente decida. Por eso el problema se parece más a un <em>bandit contextual</em> con contexto cambiante que a un proceso de decisión secuencial estricto (ver Anexo A). Lo secuencial sobrevive porque el estado de un remitente evoluciona con su historial, sobre todo en el caso del remitente comprometido.</li>
+      <li><strong>Probablemente RL no sea la herramienta más precisa.</strong> Un filtro supervisado o bayesiano bien entrenado sobre un corpus real seguramente sería más exacto que esta política tabular. Su punto débil está en el costo asimétrico y el desbalance de clases, algo que aquí la recompensa resuelve de forma natural, sin ajuste manual.</li>
+      <li><strong>Discretización de 72 estados.</strong> Binear los enlaces y la hora en pocos niveles pierde información fina, a cambio de una tabla <span class="mono">Q</span> que se puede mostrar completa en pantalla. Es una decisión de comunicación, no una optimización.</li>
+    </ul>
   </div>
 
   <footer class="pie">

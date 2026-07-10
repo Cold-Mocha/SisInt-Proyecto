@@ -26,16 +26,19 @@ Funciona directo desde el sistema de archivos, sin servidor ni build.
 
 ## Informe
 
-Este README es el informe breve de la tarea. También hay una versión más
-formal del mismo contenido en `docs/informe.tex` (fuente LaTeX) y
-`docs/informe.pdf` (ya compilado, 4 páginas).
+El informe breve de la tarea es
+[`Sistemas Inteligentes Informe.pdf`](Sistemas%20Inteligentes%20Informe.pdf)
+(3 páginas). La app misma también cierra con una sección de
+["Conclusiones y limitaciones"](https://cold-mocha.github.io/SisInt-Proyecto/#conclusion)
+con el mismo contenido, para no depender solo del PDF.
 
 ## Estructura del proyecto
 
 ```
 clasificador-rl/
-├─ index.html              # La aplicación (prólogo, cap. 1, "armando el agente" en 4 piezas, 2 anexos)
+├─ index.html              # La aplicación (prólogo, cap. 1, "armando el agente" en 4 piezas, cap. 3, 2 anexos, conclusiones)
 ├─ .nojekyll               # Sirve los archivos sin procesar en GitHub Pages
+├─ Sistemas Inteligentes Informe.pdf  # Informe breve de la tarea (2 a 4 páginas)
 ├─ css/
 │  ├─ tokens.css           # Sistema de diseño
 │  ├─ style.css            # Layout, tipografía, componentes
@@ -46,11 +49,8 @@ clasificador-rl/
 │  ├─ scroll.js            # Navegación por capítulo (paginación, teclado)
 │  ├─ simulacion.js        # Cap. 3: entrena al agente en vivo en el navegador
 │  └─ app.js               # Orquestador: arma los ejemplos y arranca la navegación
-├─ scripts/
-│  └─ verify.cjs           # Verificación en terminal de js/rl.js
-└─ docs/
-   ├─ informe.tex          # Informe breve, fuente LaTeX (2 a 4 páginas)
-   └─ informe.pdf          # Mismo informe, ya compilado
+└─ scripts/
+   └─ verify.cjs           # Verificación en terminal de js/rl.js
 ```
 
 ## El caso de detección de anomalías
