@@ -28,9 +28,7 @@ Funciona directo desde el sistema de archivos, sin servidor ni build.
 
 El informe breve de la tarea es
 [`Sistemas Inteligentes Informe.pdf`](Sistemas%20Inteligentes%20Informe.pdf)
-(3 páginas). La app misma también cierra con una sección de
-["Conclusiones y limitaciones"](https://cold-mocha.github.io/SisInt-Proyecto/#conclusion)
-con el mismo contenido, para no depender solo del PDF.
+(3 páginas).
 
 ## Estructura del proyecto
 
