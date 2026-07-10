@@ -1,5 +1,7 @@
 # El Clasificador — Aprendizaje por Refuerzo para la detección de correo anómalo
 
+**➜ Ver la app publicada: <https://cold-mocha.github.io/SisInt-Proyecto/>**
+
 Novela gráfica interactiva **no jugable** que enseña Aprendizaje por Refuerzo (RL)
 aplicado a un problema de detección de anomalías: separar correo legítimo de
 correo anómalo (spam y **suplantación / phishing**). El usuario no clasifica
@@ -25,38 +27,11 @@ correo— fracasar, aprender y terminar superando a las reglas obvias.
 
 ## Cómo verlo
 
-### Opción A — Abrirlo directamente (local)
-
-Descarga o clona el repositorio y **abre `index.html` con doble clic**. Funciona
-tal cual desde el sistema de archivos (`file://`): no usa módulos ES ni `fetch`,
-así que no necesita servidor. (La única dependencia opcional son las tipografías
-de Google Fonts; sin conexión, la página usa fuentes del sistema.)
-
-Si prefieres un servidor local:
-
-```bash
-cd clasificador-rl
-python3 -m http.server 8000
-# luego abre http://localhost:8000
-```
-
-### Opción B — Publicarlo en GitHub Pages (recomendado para entregar)
-
-1. Crea un repositorio en GitHub y sube el contenido de esta carpeta:
-   ```bash
-   git add .
-   git commit -m "El Clasificador — app de RL"
-   git branch -M main
-   git remote add origin https://github.com/USUARIO/clasificador-rl.git
-   git push -u origin main
-   ```
-2. En GitHub: **Settings → Pages**.
-3. En *Build and deployment → Source* elige **Deploy from a branch**.
-4. Branch: **`main`**, carpeta: **`/ (root)`**. Guarda.
-5. En un minuto la app estará en `https://USUARIO.github.io/clasificador-rl/`.
-
-> El archivo `.nojekyll` (incluido) evita que GitHub Pages procese el sitio con
-> Jekyll: se sirve el HTML/CSS/JS tal cual.
+La forma más simple es abrir el link publicado de arriba. Si prefieres correrlo
+local, descarga o clona el repositorio y **abre `index.html` con doble clic**:
+funciona tal cual desde el sistema de archivos (`file://`), sin servidor ni
+build (la única dependencia opcional son las tipografías de Google Fonts; sin
+conexión, la página usa fuentes del sistema).
 
 ## Estructura del proyecto
 
@@ -78,7 +53,8 @@ clasificador-rl/
 ├─ scripts/
 │  └─ verify.cjs           # Verificación en terminal de js/rl.js (no forma parte de la app)
 └─ docs/
-   └─ informe.md           # Informe breve (2–4 páginas)
+   ├─ informe.md           # Informe breve (2–4 páginas)
+   └─ informe.html         # Mismo informe, formateado para imprimir/exportar a PDF
 ```
 
 El núcleo `js/rl.js` **no depende de la interfaz**: el modelo no sabe que existe
